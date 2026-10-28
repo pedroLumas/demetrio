@@ -2,14 +2,61 @@
 'use strict';
 
 const KEY = 'pensador.v1';
-const MAX_VIVAS = 3;
+const MAX_VIVAS = 8;
 const DAY = 864e5;
 const PALS = ['ember', 'ocean', 'violet', 'forest', 'gold', 'rose'];
 const LEVELS = ['Sin puntuar', 'Casi nada', 'Lo básico', 'Defendible', 'Sólido', 'Podría enseñarlo'];
 const TABS = { pensar: 'Pensar', preguntas: 'Preguntas', mapa: 'Mapa' };
-const STEPS = [
-  { key: 'hypothesis', n: 1, name: 'Hipótesis', title: 'Tu hipótesis', help: 'Una frase. Aunque sea mala.', ph: 'Creo que…' },
-  { key: 'refutation', n: 2, name: 'Refutación', title: 'Qué la refutaría', help: '¿Qué dato te haría cambiar de idea?', ph: 'Cambiaría de opinión si…' },
+const TYPES = {
+  gran: {
+    name: 'Gran pregunta',
+    hint: 'Para volver a ella muchas veces. Sin prisa por cerrarla.',
+    steps: [
+      { key: 'hypothesis', name: 'Hipótesis', title: 'Tu hipótesis', help: 'Una frase. Aunque sea mala.', ph: 'Creo que…' },
+      { key: 'refutation', name: 'Refutación', title: 'Qué la refutaría', help: '¿Qué dato te haría cambiar de idea?', ph: 'Cambiaría de opinión si…' },
+    ],
+    evName: 'Evidencia',
+    evTitle: 'Evidencia',
+    evHelp: 'Un dato, una fuente o un contraejemplo.',
+    closeLabel: 'Tu conclusión, en una frase',
+    closePh: 'Lo que pienso ahora…',
+    conclLabel: 'Conclusión',
+  },
+  detalle: {
+    name: 'Detalle → mapa',
+    hint: 'De algo concreto que viste al plano general. Se resuelve y se cierra.',
+    steps: [
+      { key: 'hypothesis', name: 'Explicación', title: 'Tu primera explicación', help: '¿Cómo es posible? Lo primero que se te ocurra.', ph: 'Es posible porque…' },
+      { key: 'chain', name: 'Quién y cuándo', title: '¿Quién lo hizo posible y cuándo?', help: 'Tu apuesta, antes de buscarlo.', ph: 'Creo que lo hizo… en…' },
+    ],
+    evName: 'Comprobado',
+    evTitle: 'Lo que comprobé',
+    evHelp: 'Qué buscaste, qué encontraste y si acertaste.',
+    closeLabel: '¿Qué revela del mundo?',
+    closePh: 'El plano general que esto me enseña…',
+    conclLabel: 'Qué revela del mundo',
+  },
+};
+
+// Ideas sugeridas: se añaden con un toque desde Preguntas.
+const BANK = [
+  { type: 'detalle', text: '¿Por qué el crack se castigaba mucho más que la cocaína en polvo en EE. UU.? ¿Quién lo decidió y a quién afectó?' },
+  { type: 'detalle', text: '¿Por qué la mafia siciliana vendía «protección»? ¿Qué le faltaba al Estado para que ese negocio existiera?' },
+  { type: 'detalle', text: '¿Por qué los cárteles mexicanos acabaron controlando la cocaína que antes dominaba Colombia?' },
+  { type: 'detalle', text: '¿Por qué Napoleón vendió Luisiana a EE. UU. en 1803 si acababa de recuperarla?' },
+  { type: 'detalle', text: 'Las Meditaciones de Marco Aurelio se escribieron en campaña, junto al Danubio. ¿Qué le pasaba al imperio mientras tanto?' },
+  { type: 'detalle', text: 'Séneca era de los hombres más ricos de Roma y escribía contra la riqueza. ¿Cómo se explica y qué dice de su relación con Nerón?' },
+  { type: 'detalle', text: 'En los barrios obreros de tu ciudad hay bloques casi idénticos de los años 60. ¿Quién los construyó, para quién y por qué así?' },
+  { type: 'detalle', text: '¿Por qué hay pueblos enteros vacíos en el interior de España? ¿Qué decisiones y qué fechas los vaciaron?' },
+  { type: 'detalle', text: '¿Qué hizo caer a Pablo Escobar, con tanto dinero y tanta violencia? ¿Quién lo derrotó de verdad?' },
+  { type: 'detalle', text: '¿Por qué TikTok o Instagram son gratis? ¿Quién paga y qué es lo que compran de ti?' },
+  { type: 'detalle', text: '¿Por qué los ricos de la Roma antigua regalaban banquetes y juegos al pueblo? ¿Qué compraban?' },
+  { type: 'detalle', text: '¿Por qué casi todo el petróleo se compra y se vende en dólares? ¿Cuándo empezó y a quién beneficia?' },
+  { type: 'detalle', text: 'Un bolso de lujo cuesta cientos de veces lo que cuesta fabricarlo. ¿Qué se está vendiendo realmente?' },
+  { type: 'detalle', text: '¿Por qué las ciudades de EE. UU. siguen separadas por barrios según la raza si la segregación legal acabó hace décadas?' },
+  { type: 'gran', text: '¿Existe de verdad el libre albedrío o solo la sensación de elegir?' },
+  { type: 'gran', text: '¿El poder corrompe a quien lo tiene o solo atrae a quien ya era corruptible?' },
+  { type: 'gran', text: '¿Qué hace que una civilización se derrumbe?' },
 ];
 
 const svg = d => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
@@ -33,7 +80,7 @@ const ago = t => {
 
 const mkQ = (text, status = 'cola', pal = 'violet', extra = {}) => ({
   id: uid(), text, status, pal,
-  hypothesis: '', refutation: '', evidence: [],
+  type: 'gran', hypothesis: '', refutation: '', chain: '', evidence: [],
   missing: '', prediction: '', consult: false, conclusion: '',
   created: Date.now(), updated: Date.now(), touched: 0, closedAt: 0, ...extra,
 });
@@ -43,9 +90,9 @@ function seed() {
   return {
     v: 2,
     questions: [
-      mkQ('¿Por qué cae la República romana: instituciones débiles o ambiciones personales?', 'viva', 'ember', { seed: true }),
+      mkQ('En un tráiler de GTA 6 sale un bloque de pisos tumbados y unidos para cocinar droga. ¿Por qué existen esos bloques, quién los construyó y por qué acabaron en manos de bandas?', 'viva', 'ember', { seed: true, type: 'detalle' }),
       mkQ('¿Qué depende de mí de verdad y qué solo creo que depende de mí?', 'viva', 'ocean', { seed: true }),
-      mkQ('¿Por qué las sociedades más ricas tienen menos hijos?', 'viva', 'violet', { seed: true }),
+      mkQ('¿Por qué cae la República romana: instituciones débiles o ambiciones personales?', 'viva', 'violet', { seed: true }),
     ],
     map: ['Historia antigua', 'Historia moderna', 'Filosofía estoica', 'Filosofía política', 'Economía', 'Ciencia y método', 'Psicología', 'Literatura'].map(mkNode),
     parked: [],
@@ -78,6 +125,8 @@ let view = 'pensar';
 let sheet = null;
 let editing = null;
 let draft = '';
+let newType = 'gran';
+let bankOffset = 0;
 const folds = new Set();
 const gapOpen = new Set();
 let saveT = 0;
@@ -118,8 +167,12 @@ function toast(msg) {
 
 const byId = id => state.questions.find(x => x.id === id);
 const vivas = () => state.questions.filter(x => x.status === 'viva');
-const stageOf = q => (!q.hypothesis.trim() ? 'hypothesis' : !q.refutation.trim() ? 'refutation' : 'evidence');
-const progress = q => (q.hypothesis.trim() ? 1 : 0) + (q.refutation.trim() ? 1 : 0) + (q.evidence.length ? 1 : 0);
+const typeOf = q => TYPES[q.type] || TYPES.gran;
+const stageIdx = q => {
+  const i = typeOf(q).steps.findIndex(s => !q[s.key].trim());
+  return i < 0 ? typeOf(q).steps.length : i;
+};
+const progress = q => typeOf(q).steps.filter(s => q[s.key].trim()).length + (q.evidence.length ? 1 : 0);
 
 // La pregunta que más tiempo lleva sin visitarse. Sin decidir nada.
 function pickCurrent(skip) {
@@ -153,7 +206,7 @@ const field = (q, key, ph, extra = '') =>
 
 const stepCard = (q, s, editMode) => `
   <section class="glass step">
-    <div class="step-h"><b>${s.n}</b><span>${s.title}</span></div>
+    <div class="step-h"><b>${typeOf(q).steps.indexOf(s) + 1}</b><span>${s.title}</span></div>
     <p class="help">${s.help}</p>
     ${field(q, s.key, s.ph)}
     ${editMode
@@ -171,8 +224,8 @@ function evidenceCard(q) {
   const last = q.evidence.slice(-3).reverse();
   return `
   <section class="glass step">
-    <div class="step-h"><b>3</b><span>Evidencia</span>${q.consult ? '<em class="tag">por consultar</em>' : ''}</div>
-    <p class="help">Un dato, una fuente o un contraejemplo.</p>
+    <div class="step-h"><b>${typeOf(q).steps.length + 1}</b><span>${typeOf(q).evTitle}</span>${q.consult ? '<em class="tag">por consultar</em>' : ''}</div>
+    <p class="help">${typeOf(q).evHelp}</p>
     ${last.map(e => `<div class="ev"><time>${fmtDay(e.t)}</time><span>${esc(e.text)}</span></div>`).join('')}
     ${n > 3 ? `<button class="link" data-act="open" data-qid="${q.id}">Ver las ${n}</button>` : ''}
     <div class="evadd">
@@ -197,19 +250,19 @@ function pensarView(q) {
       </section>`;
   }
   const v = vivas();
-  const stage = stageOf(q);
-  const idx = { hypothesis: 0, refutation: 1, evidence: 2 }[stage];
-  const rail = ['Hipótesis', 'Refutación', 'Evidencia']
+  const T = typeOf(q);
+  const idx = stageIdx(q);
+  const rail = [...T.steps.map(s => s.name), T.evName]
     .map((n, k) => `<li class="${k < idx ? 'done' : k === idx ? 'now' : ''}"><i></i>${n}</li>`).join('');
-  const quotes = STEPS.slice(0, idx)
+  const quotes = T.steps.slice(0, idx)
     .map(s => (editing === s.key ? stepCard(q, s, true) : quoteBtn(q, s))).join('');
-  const now = stage === 'evidence' ? evidenceCard(q) : stepCard(q, STEPS[idx], false);
+  const now = idx >= T.steps.length ? evidenceCard(q) : stepCard(q, T.steps[idx], false);
   return `
     <div class="top-eyebrow">
-      <span class="eyebrow">Pregunta ${v.indexOf(q) + 1} de ${v.length}</span>
-      <div class="dots">${v.map(x => `<button class="dot${x === q ? ' on' : ''}" data-act="pick" data-qid="${x.id}" aria-label="Ir a la pregunta"></button>`).join('')}</div>
+      <span class="eyebrow">${v.indexOf(q) + 1}/${v.length} · ${T.name}</span>
+      <div class="dots" style="--dw:${Math.min(26, Math.floor(150 / v.length))}px">${v.map(x => `<button class="dot${x === q ? ' on' : ''}" data-act="pick" data-qid="${x.id}" aria-label="Ir a la pregunta"></button>`).join('')}</div>
     </div>
-    <h2 class="hero">${esc(q.text)}</h2>
+    <h2 class="hero${q.text.length > 110 ? ' xl' : q.text.length > 70 ? ' lg' : ''}">${esc(q.text)}</h2>
     ${q.seed ? '<p class="tip">Pregunta de ejemplo. Cámbiala por la tuya en Preguntas.</p>' : ''}
     <ol class="rail">${rail}</ol>
     ${quotes}
@@ -224,6 +277,7 @@ const qCard = q => `
       <div class="t">${esc(q.text)}</div>
       <div class="m">
         <span class="pips">${[0, 1, 2].map(k => `<i class="${k < progress(q) ? 'on' : ''}"></i>`).join('')}</span>
+        <span>${typeOf(q).name}</span>
         ${q.evidence.length ? `<span>${q.evidence.length} evid.</span>` : ''}
         ${q.consult ? '<span>por consultar</span>' : ''}
         ${q.seed ? '<span>ejemplo</span>' : ''}
@@ -236,6 +290,24 @@ const fold = (id, title, count, inner) => `
     <summary><div>${title}<span>${count}</span></div></summary>
     ${inner}
   </details>`;
+
+function ideasSection() {
+  const have = new Set(state.questions.map(q => q.text));
+  const free = BANK.filter(b => !have.has(b.text));
+  if (!free.length) return '';
+  const n = Math.min(4, free.length);
+  const start = bankOffset % free.length;
+  const shown = Array.from({ length: n }, (_, k) => free[(start + k) % free.length]);
+  return `
+    <div class="sec"><h2>Ideas para pensar</h2><span>${free.length}</span></div>
+    <div class="qlist">${shown.map(b => `
+      <div class="glass idea">
+        <span class="kind">${TYPES[b.type].name}</span>
+        <p>${esc(b.text)}</p>
+        <button class="btn ghost sm" data-act="add-idea" data-i="${BANK.indexOf(b)}">+ Añadir</button>
+      </div>`).join('')}</div>
+    ${free.length > n ? '<div class="center"><button class="link" data-act="more-ideas">Otras ideas</button></div>' : ''}`;
+}
 
 function preguntasView() {
   const qs = state.questions;
@@ -251,6 +323,8 @@ function preguntasView() {
       <input type="text" id="new-q" placeholder="Nueva pregunta…" value="${esc(draft)}" enterkeyhint="done" aria-label="Nueva pregunta">
       <button class="btn primary icon" data-act="add-q" aria-label="Añadir">+</button>
     </div>
+    <div class="chips tight">${Object.keys(TYPES).map(k => `<button class="chip${k === newType ? ' on' : ''}" data-act="new-type" data-t="${k}">${TYPES[k].name}</button>`).join('')}</div>
+    <p class="tip" style="margin:8px 4px 0">${TYPES[newType].hint}</p>
 
     <div class="sec"><h2>Vivas</h2><span>${vi.length} de ${MAX_VIVAS}</span></div>
     <div class="qlist">${vi.length ? vi.map(qCard).join('') : '<p class="empty">Ninguna. Añade una arriba.</p>'}</div>
@@ -269,6 +343,8 @@ function preguntasView() {
         </section>`).join('')}` : ''}
 
     ${co.length ? `<div class="sec"><h2>En cola</h2><span>${co.length}</span></div><div class="qlist">${co.map(qCard).join('')}</div>` : ''}
+
+    ${ideasSection()}
 
     ${ce.length ? fold('cerradas', 'Cerradas', ce.length, `<div class="qlist">${ce.map(qCard).join('')}</div>`) : ''}
 
@@ -385,8 +461,8 @@ function sheetBody() {
   if (sheet.type === 'cerrar') {
     return `<p class="eyebrow">Cerrar pregunta</p>
       <h2 class="hero sm">${esc(q.text)}</h2>
-      <label>Tu conclusión, en una frase</label>
-      ${field(q, 'conclusion', 'Lo que pienso ahora…', 'sheet-serif')}
+      <label>${typeOf(q).closeLabel}</label>
+      ${field(q, 'conclusion', typeOf(q).closePh, 'sheet-serif')}
       <button class="btn primary wide" style="margin-top:18px" data-act="close-q" data-qid="${q.id}">Cerrar</button>`;
   }
   const ro = (label, t) => (t.trim() ? `<label>${label}</label><div class="ro"><p>${esc(t)}</p></div>` : '');
@@ -395,7 +471,8 @@ function sheetBody() {
     <div class="chips">
       ${[['viva', 'Viva'], ['cola', 'En cola'], ['cerrada', 'Cerrada']].map(([s, l]) => `<button class="chip${q.status === s ? ' on' : ''}" data-act="status" data-qid="${q.id}" data-s="${s}">${l}</button>`).join('')}
     </div>
-    ${ro('Hipótesis', q.hypothesis)}${ro('Qué la refutaría', q.refutation)}${ro('Conclusión', q.conclusion)}
+    <div class="chips tight">${Object.keys(TYPES).map(k => `<button class="chip${q.type === k ? ' on' : ''}" data-act="set-type" data-qid="${q.id}" data-t="${k}">${TYPES[k].name}</button>`).join('')}</div>
+    ${typeOf(q).steps.map(s => ro(s.title, q[s.key])).join('')}${ro(typeOf(q).conclLabel, q.conclusion)}
     ${q.evidence.length ? `<label>Evidencia</label>${q.evidence.map((e, i) => `<div class="ev"><time>${fmtDay(e.t)}</time><span>${esc(e.text)}</span><button class="x" data-act="del-ev" data-qid="${q.id}" data-i="${i}" aria-label="Borrar">×</button></div>`).join('')}` : ''}
     <div class="row between" style="margin-top:22px">
       <button class="link danger" data-act="del-q" data-qid="${q.id}">Borrar</button>
@@ -463,7 +540,7 @@ function addQuestion() {
   const text = draft.trim();
   if (!text) return toast('Escribe la pregunta primero.');
   const live = vivas().length < MAX_VIVAS;
-  state.questions.push(mkQ(text, live ? 'viva' : 'cola', PALS[state.questions.length % PALS.length]));
+  state.questions.push(mkQ(text, live ? 'viva' : 'cola', PALS[state.questions.length % PALS.length], { type: newType }));
   draft = '';
   refresh(true);
   toast(live ? 'Añadida a tus vivas.' : `Añadida a la cola. Ya tienes ${MAX_VIVAS} vivas.`);
@@ -486,6 +563,21 @@ function act(name, d, el) {
     case 'falta': return openSheet({ type: 'falta', id: d.qid });
     case 'cerrar': return openSheet({ type: 'cerrar', id: d.qid });
     case 'add-q': return addQuestion();
+    case 'new-type': newType = d.t; return render();
+    case 'set-type': {
+      const q = byId(d.qid);
+      if (q) { q.type = d.t; q.updated = Date.now(); }
+      return refresh();
+    }
+    case 'more-ideas': bankOffset += 4; return render();
+    case 'add-idea': {
+      const b = BANK[+d.i];
+      if (!b) return;
+      const live = vivas().length < MAX_VIVAS;
+      state.questions.push(mkQ(b.text, live ? 'viva' : 'cola', PALS[state.questions.length % PALS.length], { type: b.type }));
+      refresh();
+      return toast(live ? 'Añadida a tus vivas.' : 'Añadida a la cola.');
+    }
     case 'status': { const q = byId(d.qid); return q && setStatus(q, d.s); }
     case 'del-q': {
       const q = byId(d.qid);

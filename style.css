@@ -87,6 +87,8 @@ p { margin: 0; }
   text-wrap: balance;
   text-shadow: 0 2px 28px rgba(0, 0, 0, .4);
 }
+.hero.lg { font-size: clamp(1.5rem, 6.4vw, 2rem); }
+.hero.xl { font-size: clamp(1.32rem, 5.5vw, 1.7rem); line-height: 1.22; }
 .hero.sm { font-size: 1.5rem; margin: 12px 0 18px; }
 .title { margin: 6px 0 4px; font: 600 2.1rem/1.1 var(--serif); letter-spacing: -.01em; }
 .lead { color: var(--ink-2); margin-bottom: 18px; }
@@ -143,9 +145,9 @@ label { display: block; margin: 16px 0 8px; font: 600 .7rem/1.2 var(--sans); let
 /* pensar */
 .top-eyebrow { display: flex; align-items: center; justify-content: space-between; }
 .dots { display: flex; }
-.dot { width: 26px; height: 26px; border: 0; background: none; padding: 0; position: relative; cursor: pointer; }
+.dot { width: var(--dw, 26px); height: 26px; border: 0; background: none; padding: 0; position: relative; cursor: pointer; }
 .dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 4px; background: rgba(255, 255, 255, .3); transition: .3s var(--ease); }
-.dot.on::after { width: 20px; margin-left: -10px; background: var(--acc); }
+.dot.on::after { width: calc(var(--dw, 26px) - 6px); margin-left: calc((var(--dw, 26px) - 6px) / -2); background: var(--acc); }
 
 .rail { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 20px; }
 .rail li { flex: 1; display: grid; gap: 8px; font: 600 .66rem/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
@@ -270,6 +272,10 @@ details.fold summary span { margin-left: 8px; color: var(--ink-3); letter-spacin
 .chips { display: flex; gap: 8px; margin-top: 14px; }
 .chip { flex: 1; min-height: 42px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); font: 600 .88rem var(--sans); cursor: pointer; }
 .chip.on { background: var(--ink); color: #17130d; border-color: var(--ink); }
+.chips.tight { margin-top: 6px; }
+.idea { margin: 0; padding: 16px; }
+.idea .kind { font: 600 .66rem/1 var(--sans); letter-spacing: .13em; text-transform: uppercase; color: var(--acc); }
+.idea p { margin: 8px 0 14px; font: 500 1.08rem/1.35 var(--serif); }
 .ro { margin-top: 6px; }
 .ro p { font: 400 1.02rem/1.45 var(--serif); white-space: pre-wrap; overflow-wrap: anywhere; }
 @keyframes sheet { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
