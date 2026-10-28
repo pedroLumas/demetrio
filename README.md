@@ -21,3 +21,5 @@ Usa **Preguntas → Utilidades → Copia de seguridad** para exportar e importar
 Enlaces directos: `?ruido` abre «Ruido»; `#pensar`, `#preguntas`, `#mapa`.
 
 Sin build: archivos estáticos. Local: `python -m http.server 8123`.
+
+Si la app no se ve actualizada: **Preguntas → Utilidades → Aplicación → Actualizar ahora**, o abre `actualizar.html` en Safari. No borra tus preguntas.

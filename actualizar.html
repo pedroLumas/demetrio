@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Actualizando Pensador</title>
+</head>
+<body style="margin:0;background:#0a0a10;color:#f5f0e7;font:17px/1.5 -apple-system,system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;text-align:center;padding:24px">
+<p id="m">Actualizando Pensador…</p>
+<script>
+// Borra la copia guardada de la app y la vuelve a descargar. No toca tus preguntas.
+(async () => {
+  try {
+    for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+  } catch (e) { /* ignorar */ }
+  document.getElementById('m').textContent = 'Listo. Abriendo…';
+  setTimeout(() => location.replace('./?u=' + Date.now()), 600);
+})();
+</script>
+</body>
+</html>

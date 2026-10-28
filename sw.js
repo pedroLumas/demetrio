@@ -1,4 +1,4 @@
-const CACHE = 'pensador-v8';
+const CACHE = 'pensador-v9';
 const ASSETS = [
   './',
   'index.html',
@@ -11,8 +11,18 @@ const ASSETS = [
   'icons/apple-touch-icon.png',
 ];
 
+// Instalar siempre con archivos frescos (sin pasar por la caché HTTP de GitHub Pages, que dura 10 min).
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => Promise.all(ASSETS.map(u =>
+        fetch(new Request(u, { cache: 'reload' })).then(r => {
+          if (!r.ok) throw new Error(u);
+          return c.put(u, r);
+        })
+      )))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
@@ -23,22 +33,21 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Cache primero para abrir al instante; se actualiza en segundo plano.
+// Red primero: si hay conexión, siempre la última versión. Sin conexión o con red lenta, la copia guardada.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-  e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then(hit => {
-      const net = fetch(req)
-        .then(res => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then(c => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => hit);
-      return hit || net;
-    })
-  );
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    try {
+      const net = fetch(req.mode === 'navigate' ? req.url : req, { cache: 'no-cache' });
+      const res = await Promise.race([net, new Promise((_, no) => setTimeout(() => no(new Error('lento')), 3500))]);
+      if (res && res.ok) cache.put(req, res.clone());
+      return res;
+    } catch (err) {
+      const hit = (await cache.match(req, { ignoreSearch: true })) || (await caches.match(req, { ignoreSearch: true }));
+      if (hit) return hit;
+      throw err;
+    }
+  })());
 });

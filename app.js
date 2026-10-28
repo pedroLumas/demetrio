@@ -1,6 +1,7 @@
 (() => {
 'use strict';
 
+const VERSION = 9;
 const KEY = 'pensador.v1';
 const MAX_VIVAS = 8;
 const DAY = 864e5;
@@ -526,6 +527,7 @@ function qBody() {
   }).join('');
   return `
     <div class="sec"><h2>Vivas</h2><span>${vi.length} de ${MAX_VIVAS}</span></div>
+    ${vi.length < MAX_VIVAS && co.length ? `<button class="btn ghost sm wide" style="margin-bottom:12px" data-act="fill-vivas">Subir ${Math.min(MAX_VIVAS - vi.length, co.length)} de la cola a vivas</button>` : ''}
     ${vi.length ? `<div class="vgrid">${vi.map(vcard).join('')}</div>` : '<p class="empty">Ninguna. Pulsa + para escribir una.</p>'}
 
     ${consult.length ? `
@@ -555,6 +557,11 @@ function qBody() {
       <div class="glass">
         <p class="help">Tus datos viven solo en este móvil. Guarda una copia de vez en cuando.</p>
         <div class="row"><button class="btn primary sm" data-act="export">Exportar</button><button class="btn ghost sm" data-act="import">Importar</button></div>
+      </div>`)}
+    ${group('app', 'Aplicación', 'versión ' + VERSION, `
+      <div class="glass">
+        <p class="help">Si algo no se ve como debería, pulsa aquí. Descarga la última versión y no toca tus preguntas.</p>
+        <button class="btn ghost sm" data-act="update-app">Actualizar ahora</button>
       </div>`)}`;
 }
 
@@ -1025,9 +1032,29 @@ function act(name, d, el) {
       state.map.push(mkNode(name));
       return refresh();
     }
+    case 'fill-vivas': {
+      const cola = state.questions.filter(x => x.status === 'cola').sort((a, b) => a.created - b.created);
+      const room = MAX_VIVAS - vivas().length;
+      const subir = cola.slice(0, Math.max(0, room));
+      subir.forEach(x => { x.status = 'viva'; x.closedAt = 0; });
+      refresh(true);
+      return toast(subir.length ? `${subir.length} pasan de la cola a vivas` : 'Ya tienes las vivas llenas');
+    }
+    case 'update-app': return forceUpdate();
     case 'export': return exportData();
     case 'import': return $('#imp').click();
   }
+}
+
+// Borra la copia de la app guardada en el móvil y la vuelve a descargar. Las preguntas no se tocan.
+async function forceUpdate() {
+  toast('Buscando la última versión…');
+  save();
+  try {
+    for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+  } catch (e) { /* ignorar */ }
+  setTimeout(() => location.reload(), 500);
 }
 
 async function exportData() {
@@ -1180,6 +1207,17 @@ if (new URLSearchParams(location.search).has('ruido')) openSheet({ type: 'ruido'
 
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Si llega una versión nueva mientras la app está abierta, se recarga sola.
+  const had = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!had || reloaded) return;
+    reloaded = true;
+    save();
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+  }).catch(() => {});
 }
 })();
