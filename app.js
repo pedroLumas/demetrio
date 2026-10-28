@@ -56,24 +56,131 @@ const TYPES = {
 };
 
 // Ideas sugeridas: se añaden con un toque desde Preguntas.
+// «detalle»: parte de algo concreto y sube al plano general. «gran»: tesis del estilo «X hace Y hasta que Z».
 const BANK = [
+  // ---- crimen y mafias
   { type: 'detalle', text: '¿Por qué el crack se castigaba mucho más que la cocaína en polvo en EE. UU.? ¿Quién lo decidió y a quién afectó?' },
   { type: 'detalle', text: '¿Por qué la mafia siciliana vendía «protección»? ¿Qué le faltaba al Estado para que ese negocio existiera?' },
   { type: 'detalle', text: '¿Por qué los cárteles mexicanos acabaron controlando la cocaína que antes dominaba Colombia?' },
-  { type: 'detalle', text: '¿Por qué Napoleón vendió Luisiana a EE. UU. en 1803 si acababa de recuperarla?' },
+  { type: 'detalle', text: '¿Qué hizo caer a Pablo Escobar, con tanto dinero y tanta violencia? ¿Quién lo derrotó de verdad?' },
+  { type: 'detalle', text: 'El Cártel de Cali vivía a la vista de todos mientras Escobar se escondía. ¿Por qué Cali duró más que Medellín?' },
+  { type: 'detalle', text: 'Los narcos colombianos ofrecieron pagar la deuda externa del país a cambio de que no los extraditaran. ¿Por qué temían tanto la extradición?' },
+  { type: 'detalle', text: 'La Constitución colombiana de 1991 prohibió extraditar a los nacionales. ¿Quién ganó con ese cambio y a quién le costó?' },
+  { type: 'detalle', text: 'Escobar se entregó en 1991 y cumplió condena en una cárcel que él mismo construyó. ¿Qué dice eso de negociar con un criminal poderoso?' },
+  { type: 'detalle', text: 'Cuando cae el capo de un cártel, la violencia suele subir en vez de bajar. ¿Por qué decapitar una organización no la destruye?' },
+  { type: 'detalle', text: 'Lucky Luciano salió de prisión en 1946 y fue deportado a Italia. ¿Qué pacto con el Estado se cuenta detrás y cuánto hay de verdad?' },
+  { type: 'detalle', text: 'Meyer Lansky ayudó a montar el negocio del juego en La Habana y en Las Vegas. ¿Por qué el juego fue el gran negocio de la mafia tras la Ley Seca?' },
+  { type: 'detalle', text: 'Whitey Bulger fue confidente del FBI mientras dirigía una banda. ¿Por qué un Estado protege a veces a criminales?' },
+  { type: 'detalle', text: 'La ’Ndrangheta controla buena parte de la cocaína que llega a Europa. ¿Por qué una región pobre como Calabria acabó ahí?' },
+  { type: 'detalle', text: 'Róterdam y Amberes son la puerta de la cocaína a Europa. ¿Qué tiene un puerto para ser tan vulnerable?' },
+  { type: 'detalle', text: 'Las mafias rusas crecieron tras la caída de la URSS. ¿Qué vacío llenaron y quién se lo dejó libre?' },
+  { type: 'detalle', text: 'La yakuza es una organización visible y casi legal en Japón. ¿Por qué el Estado la toleró durante décadas?' },
+  { type: 'detalle', text: 'Las tríadas chinas nacieron como sociedades secretas de resistencia. ¿Cómo pasa una organización política a ser un negocio criminal?' },
+  { type: 'detalle', text: 'Los narcos construyen iglesias y reparten dinero en sus barrios. ¿Qué compran con eso?' },
+  { type: 'detalle', text: 'Los capos tienen ejércitos privados. ¿Qué le falta a un Estado para perder el monopolio de la violencia?' },
+  { type: 'detalle', text: '¿Por qué las cárceles funcionan como escuelas del crimen y quién se beneficia de que sigan así?' },
+  // ---- Roma y mundo antiguo
+  { type: 'detalle', text: '¿Por qué los ricos de la Roma antigua regalaban banquetes y juegos al pueblo? ¿Qué compraban?' },
   { type: 'detalle', text: 'Las Meditaciones de Marco Aurelio se escribieron en campaña, junto al Danubio. ¿Qué le pasaba al imperio mientras tanto?' },
   { type: 'detalle', text: 'Séneca era de los hombres más ricos de Roma y escribía contra la riqueza. ¿Cómo se explica y qué dice de su relación con Nerón?' },
-  { type: 'detalle', text: 'En los barrios obreros de tu ciudad hay bloques casi idénticos de los años 60. ¿Quién los construyó, para quién y por qué así?' },
+  { type: 'detalle', text: 'Se cuenta que Calígula quiso nombrar cónsul a su caballo. ¿Qué quería demostrar al Senado y qué hay de cierto?' },
+  { type: 'detalle', text: 'Cuenta la leyenda que Nerón tocaba la lira mientras ardía Roma. ¿Quién ganó con la leyenda y quién con el incendio?' },
+  { type: 'detalle', text: 'Vespasiano puso un impuesto a los urinarios públicos. ¿Cómo se arregla un tesoro arruinado?' },
+  { type: 'detalle', text: 'Diocleciano fijó precios máximos por edicto en el año 301. ¿Por qué lo intentó y por qué fracasó?' },
+  { type: 'detalle', text: 'Según la tradición, Marco Aurelio subastó objetos del palacio para pagar la guerra en vez de subir impuestos. ¿Qué dice eso de las finanzas del imperio?' },
+  { type: 'detalle', text: 'Los gladiadores podían ser libres y ricos. ¿Qué negocio había detrás de los juegos y quién lo pagaba?' },
+  { type: 'detalle', text: 'Roma no tenía una policía como la actual. ¿Quién mantenía el orden en la calle?' },
+  { type: 'detalle', text: 'Roma acabó pagando a los bárbaros para que no atacaran. ¿Cuándo es mejor pagar que luchar?' },
+  { type: 'detalle', text: 'Los soldados romanos se licenciaban con tierras. ¿Qué pasa cuando ya no hay tierras que repartir?' },
+  { type: 'detalle', text: 'La peste antonina mató a millones entre los años 165 y 180. ¿Cómo cambia una epidemia la política de un imperio?' },
+  { type: 'detalle', text: 'Constantino trasladó la capital a Constantinopla. ¿Qué ganó dejando Roma?' },
+  { type: 'detalle', text: 'Los emperadores se divinizaban tras su muerte. ¿Para qué servía un dios muerto?' },
+  { type: 'detalle', text: 'Venecia vivió mil años como república comercial. ¿Qué diseño institucional le dio tanta estabilidad?' },
+  // ---- Estados Unidos
+  { type: 'detalle', text: '¿Por qué las ciudades de EE. UU. siguen separadas por barrios según la raza si la segregación legal acabó hace décadas?' },
+  { type: 'detalle', text: 'Los billetes de EE. UU. llevan «In God We Trust» desde los años 50. ¿Qué respondía el país a la URSS con eso?' },
+  { type: 'detalle', text: 'La Constitución de EE. UU. se redactó en secreto en Filadelfia en 1787. ¿Por qué no querían testigos?' },
+  { type: 'detalle', text: 'Hamilton y Jefferson discutían qué país querían: banqueros y fábricas o granjeros. ¿Quién ganó y cuándo?' },
+  { type: 'detalle', text: 'El Colegio Electoral se diseñó para que el pueblo no eligiera directamente al presidente. ¿A quién protegía y de qué?' },
+  { type: 'detalle', text: 'Andrew Jackson vetó la renovación del Banco de EE. UU. en 1832. ¿Qué poder temía?' },
+  { type: 'detalle', text: 'En la guerra civil americana el Norte tenía fábricas y ferrocarriles. ¿Cuánto de la victoria fue logística?' },
+  { type: 'detalle', text: 'En 1929 cayó Wall Street. ¿Por qué una crisis bursátil se convirtió en una depresión mundial?' },
+  { type: 'detalle', text: 'El Plan Marshall dio dinero a Europa en 1948. ¿Fue generosidad o negocio?' },
+  { type: 'detalle', text: 'Nixon viajó a China en 1972. ¿Por qué el gran anticomunista fue a darle la mano a Mao?' },
+  { type: 'detalle', text: 'Durante la Guerra Fría, EE. UU. y la URSS nunca se enfrentaron directamente. ¿Qué lo evitó: el miedo o los incentivos?' },
+  { type: 'detalle', text: 'En 2003 se invadió Irak por unas armas que no aparecieron. ¿Cómo se construye el consentimiento para una guerra?' },
+  { type: 'detalle', text: 'Hollywood difunde una imagen de EE. UU. por todo el mundo. ¿Cuándo el cine se volvió una herramienta de poder?' },
+  // ---- España y Europa
+  { type: 'detalle', text: '¿Por qué Napoleón vendió Luisiana a EE. UU. en 1803 si acababa de recuperarla?' },
   { type: 'detalle', text: '¿Por qué hay pueblos enteros vacíos en el interior de España? ¿Qué decisiones y qué fechas los vaciaron?' },
-  { type: 'detalle', text: '¿Qué hizo caer a Pablo Escobar, con tanto dinero y tanta violencia? ¿Quién lo derrotó de verdad?' },
+  { type: 'detalle', text: 'En los barrios obreros de tu ciudad hay bloques casi idénticos de los años 60. ¿Quién los construyó, para quién y por qué así?' },
+  { type: 'detalle', text: 'La Armada Invencible fracasó en 1588. ¿Fue el clima o la logística, y qué decisión de Felipe II la condenó?' },
+  { type: 'detalle', text: 'La Inquisición española vivía de la denuncia y del miedo. ¿Qué ganaba la Corona con ella?' },
+  { type: 'detalle', text: 'Carlos V abdicó y se retiró a un monasterio. ¿Por qué un emperador deja el poder en vida?' },
+  { type: 'detalle', text: 'Los Austrias se casaban entre primos y Carlos II nació enfermo. ¿Qué lógica de poder había detrás?' },
+  { type: 'detalle', text: 'España perdió su imperio americano en pocos años a principios del siglo XIX. ¿Qué rompió el vínculo con la metrópoli?' },
+  { type: 'detalle', text: 'El Escorial es monasterio, palacio y panteón a la vez. ¿Qué idea de poder se ve en un edificio así?' },
+  { type: 'detalle', text: 'Luis XIV obligó a los nobles a vivir en Versalles. ¿Cómo se doma a una aristocracia sin guerra?' },
+  { type: 'detalle', text: 'La Revolución francesa empezó por una crisis de deuda. ¿Cómo la deuda de un rey puede tumbar una monarquía?' },
+  { type: 'detalle', text: 'Napoleón vendía la guerra como libertad. ¿Por qué los pueblos «liberados» acabaron odiando a los franceses?' },
+  { type: 'detalle', text: 'El Congreso de Viena de 1815 diseñó un equilibrio que duró casi un siglo. ¿Cómo se construye una paz que dura?' },
+  { type: 'detalle', text: 'Alemania sufrió una hiperinflación en 1923. ¿Fue el castigo de Versalles o la inflación lo que radicalizó al país?' },
+  { type: 'detalle', text: 'Franco sobrevivió a Hitler y a Mussolini. ¿Qué hizo distinto en la Segunda Guerra Mundial?' },
+  { type: 'detalle', text: 'El Imperio otomano era «el hombre enfermo de Europa». ¿Cuánto tardó en morir y qué lo mantuvo vivo?' },
+  { type: 'detalle', text: 'Suiza se mantuvo neutral en las dos guerras mundiales. ¿Qué precio pagó por ello?' },
+  { type: 'detalle', text: 'Los Médici eran banqueros y acabaron gobernando Florencia. ¿Cómo se convierte el dinero en poder político?' },
+  // ---- dinero, tecnología y atención
   { type: 'detalle', text: '¿Por qué TikTok o Instagram son gratis? ¿Quién paga y qué es lo que compran de ti?' },
-  { type: 'detalle', text: '¿Por qué los ricos de la Roma antigua regalaban banquetes y juegos al pueblo? ¿Qué compraban?' },
   { type: 'detalle', text: '¿Por qué casi todo el petróleo se compra y se vende en dólares? ¿Cuándo empezó y a quién beneficia?' },
   { type: 'detalle', text: 'Un bolso de lujo cuesta cientos de veces lo que cuesta fabricarlo. ¿Qué se está vendiendo realmente?' },
-  { type: 'detalle', text: '¿Por qué las ciudades de EE. UU. siguen separadas por barrios según la raza si la segregación legal acabó hace décadas?' },
+  { type: 'detalle', text: 'Bitcoin nació en 2008, en plena crisis financiera. ¿Qué problema de confianza intentaba resolver?' },
+  { type: 'detalle', text: 'Nvidia vende los chips que mueven la inteligencia artificial. ¿Por qué un fabricante de tarjetas gráficas se volvió clave?' },
+  { type: 'detalle', text: 'Taiwán fabrica la mayoría de los chips más avanzados. ¿Qué le pasa al mundo si hay un conflicto allí?' },
+  { type: 'detalle', text: 'Los supermercados ponen la leche al fondo. ¿Qué otros trucos de diseño nos hacen gastar más?' },
+  { type: 'detalle', text: 'Las suscripciones mensuales han sustituido a las compras únicas. ¿Quién gana con ese cambio?' },
+  { type: 'detalle', text: 'Los influencers cobran por recomendar. ¿Qué vende realmente un influencer: producto o confianza?' },
+  { type: 'detalle', text: 'El precio de la vivienda se ha disparado en las grandes ciudades. ¿Quién gana y quién pierde con eso?' },
+  { type: 'detalle', text: 'Un iPhone se diseña en California y se fabrica en China. ¿Quién se queda con el margen?' },
+  { type: 'detalle', text: 'Las cajas de botín de los videojuegos se parecen a las tragaperras. ¿Qué mecanismo psicológico explotan?' },
+  { type: 'detalle', text: 'Repartidores y conductores cobran según un algoritmo. ¿Qué cambia cuando el jefe es un software?' },
+  { type: 'detalle', text: 'Las gasolineras suben el precio rápido cuando sube el petróleo y lo bajan despacio. ¿Por qué?' },
+  { type: 'detalle', text: 'Tesla ha llegado a valer más que los siguientes fabricantes juntos con muchos menos coches. ¿Qué está valorando el mercado?' },
+  { type: 'detalle', text: 'Elon Musk pagó 44.000 millones por Twitter. ¿Por qué un hombre rico compra una red social?' },
+  { type: 'detalle', text: 'Los bancos centrales llevan años comprando oro. ¿Qué temen?' },
+  // ---- grandes: «X hace Y hasta que Z»
   { type: 'gran', text: '¿Existe de verdad el libre albedrío o solo la sensación de elegir?' },
   { type: 'gran', text: '¿El poder corrompe a quien lo tiene o solo atrae a quien ya era corruptible?' },
   { type: 'gran', text: '¿Qué hace que una civilización se derrumbe?' },
+  { type: 'gran', text: '¿La burocracia protege al Estado de los tiranos hasta que se vuelve ella la tirana?' },
+  { type: 'gran', text: '¿Un estado de excepción temporal acaba siendo permanente?' },
+  { type: 'gran', text: '¿Los mercenarios defienden al Estado hasta que cobran más que él?' },
+  { type: 'gran', text: '¿La deuda financia al imperio hasta que el interés se come al imperio?' },
+  { type: 'gran', text: '¿La corrupción engrasa el sistema hasta que lo bloquea?' },
+  { type: 'gran', text: '¿Una religión de Estado unifica un imperio hasta que sus sacerdotes lo gobiernan?' },
+  { type: 'gran', text: '¿La propaganda sirve al poder hasta que el propio poder se la cree?' },
+  { type: 'gran', text: '¿El éxito militar da legitimidad al gobernante hasta que la guerra pide más de lo que da?' },
+  { type: 'gran', text: '¿La centralización da eficacia al Estado hasta que nadie se atreve a decirle la verdad al centro?' },
+  { type: 'gran', text: '¿Los genios fundan instituciones hasta que sus herederos las usan en su beneficio?' },
+  { type: 'gran', text: '¿La libertad económica crea riqueza hasta que la riqueza compra la propia libertad?' },
+  { type: 'gran', text: '¿La tolerancia fortalece a un imperio hasta que le hace perder la identidad que lo une?' },
+  { type: 'gran', text: '¿Los imperios conquistan para defenderse hasta que defenderse exige conquistar más?' },
+  { type: 'gran', text: '¿La disciplina militar da orden a un pueblo hasta que el ejército se cree el pueblo?' },
+  { type: 'gran', text: '¿Las reformas salvan a un régimen hasta que dan a la gente la esperanza que lo derriba?' },
+  { type: 'gran', text: '¿La comodidad tecnológica nos libera de tareas hasta que nos hace depender de quien la controla?' },
+  { type: 'gran', text: '¿La fama obliga a comportarse como el público espera hasta que el personaje devora a la persona?' },
+  { type: 'gran', text: '¿La riqueza compra libertad hasta que hay que protegerla y la riqueza se vuelve una cárcel?' },
+  { type: 'gran', text: '¿La virtud pública dura mientras hay recompensa por ella, hasta que la recompensa es el único motivo?' },
+  { type: 'gran', text: '¿La inflación es un impuesto invisible que los gobiernos usan hasta que la gente lo nota?' },
+  { type: 'gran', text: '¿La tradición conserva lo que funciona hasta que conserva lo que ya no funciona?' },
+  { type: 'gran', text: '¿Una guerra civil empieza cuando las dos partes creen que ganarían?' },
+  { type: 'gran', text: '¿La paz entre potencias dura mientras todas creen que perderían más atacando?' },
+  { type: 'gran', text: '¿Las ciudades-Estado sobreviven mientras valen más como socias que como presas?' },
+  { type: 'gran', text: '¿Quien escribe las reglas acaba siendo el único que puede romperlas?' },
+  { type: 'gran', text: '¿La confianza social se mantiene mientras castigar la traición sale barato?' },
+  { type: 'gran', text: '¿Los líderes carismáticos unen un movimiento hasta que su muerte lo parte en sectas?' },
+  { type: 'gran', text: '¿La meritocracia premia al mejor hasta que los mejores cierran la puerta tras ellos?' },
+  { type: 'gran', text: '¿Un pueblo acepta perder libertad a cambio de seguridad hasta que descubre quién le vende la seguridad?' },
+  { type: 'gran', text: '¿La información libre desenmascara al poder hasta que el poder aprende a inundarla de ruido?' },
 ];
 
 /* ---------- iconos ---------- */
@@ -111,12 +218,12 @@ const ago = t => {
 function guessTag(text) {
   const t = ' ' + fold1(text).replace(/[^a-z0-9. ]+/g, ' ') + ' ';
   const has = (...w) => w.some(x => t.includes(x));
-  if (has(' mi ', ' mis ', ' yo ', ' me ', ' debo ', ' prefiero ', ' quiero ', 'importarme', 'nuestra atencion', ' sigo ', 'cotidiano')) return 'Yo';
-  if (has('ee. uu', 'ee uu', 'estados unidos', 'washington', 'lincoln', 'rockefeller', 'padres fundadores', 'standard oil')) return 'EE. UU.';
-  if (has(' roma', 'romano', 'romana', ' cesar', 'trajano', 'adriano', ' sila ', 'pretoriano', ' severo', 'caracalla', ' decio', 'maximino', 'marco aurelio', 'seneca', ' neron', 'pompeyo', 'augusto', 'senado', 'legion', 'emperador')) return 'Roma';
-  if (has('escobar', 'capone', 'ley seca', 'chapo', 'provenzano', 'mafia', ' maras', 'carteles', 'padrino', 'narco', 'cocaina', 'crack', ' gta')) return 'Crimen';
-  if (has('felipe ii', 'franco', 'napoleon', 'prusia', 'bismarck', 'espana', 'alemania', 'junkers', 'imperio espanol')) return 'Europa';
-  if (has(' rico', 'riqueza', 'dinero', 'banco', 'bancarrota', 'amazon', 'zara', 'ortega', 'marketplace', 'apuestas', 'movil', 'cobalto', 'suez', 'casinos', 'lehman', 'carnegie', 'petroleo', 'dolar', 'bolso', 'tiktok', 'herederos', 'deuda', 'economia')) return 'Dinero';
+  if (has(' mi ', ' mis ', ' yo ', ' me ', ' nos ', ' debo ', ' prefiero ', ' quiero ', 'importarme', 'libre albedrio', 'nuestra atencion', ' sigo ', 'cotidiano')) return 'Yo';
+  if (has('ee. uu', 'ee uu', 'estados unidos', 'washington', 'lincoln', 'rockefeller', 'padres fundadores', 'standard oil', 'jackson', 'hamilton', 'colegio electoral', 'plan marshall', 'nixon', 'guerra fria', 'wall street', 'hollywood', 'americana', ' irak', 'in god we trust')) return 'EE. UU.';
+  if (has(' roma', 'romano', 'romana', ' cesar', 'trajano', 'adriano', ' sila ', 'pretoriano', ' severo', 'caracalla', ' decio', 'maximino', 'marco aurelio', 'seneca', ' neron', 'pompeyo', 'augusto', 'senado', 'legion', 'emperador', 'diocleciano', 'vespasiano', 'caligula', 'constantino', 'antonina', 'gladiador')) return 'Roma';
+  if (has('escobar', 'capone', 'ley seca', 'chapo', 'provenzano', 'mafia', ' maras', 'cartel', 'padrino', 'narco', 'cocaina', 'crack', ' gta', 'luciano', 'lansky', 'bulger', 'ndrangheta', 'yakuza', 'triadas', ' capo', 'extradit', 'carceles', 'rotterdam', 'roterdam', 'amberes')) return 'Crimen';
+  if (has('felipe ii', 'franco', 'napoleon', 'prusia', 'bismarck', 'espana', 'alemania', 'junkers', 'imperio espanol', 'versalles', 'luis xiv', 'revolucion francesa', 'congreso de viena', 'otomano', 'suiza', 'medici', 'carlos v', 'carlos ii', 'austrias', 'inquisicion', 'armada invencible', 'escorial', 'hitler', 'venecia', 'florencia', 'barrios obreros')) return 'Europa';
+  if (has(' rico', 'riqueza', 'dinero', 'banco', 'bancarrota', 'amazon', 'zara', 'ortega', 'marketplace', 'apuestas', 'movil', 'cobalto', 'suez', 'casinos', 'lehman', 'carnegie', 'petroleo', 'dolar', 'bolso', 'tiktok', 'herederos', 'deuda', 'economi', 'videojuegos', 'nvidia', 'taiwan', 'iphone', 'suscripciones', 'influencer', 'vivienda', 'tesla', 'musk', 'bitcoin', 'supermercado', 'gasolinera', 'algoritmo', 'inflacion', ' oro', 'millones', 'precio', 'comprar')) return 'Dinero';
   return 'Poder';
 }
 
@@ -171,6 +278,8 @@ let editing = null;
 let draft = '';
 let newType = 'gran';
 let bankOffset = 0;
+let iTag = 'todas';
+let iType = 'todas';
 let query = '';
 let fType = 'todas';
 let fTag = 'todas';
@@ -352,24 +461,30 @@ const qRow = (q, showStatus) => `
   </button>`;
 
 const vcard = q => `
-  <article class="vcard hair" data-pal="${palOf(q)}">
+  <article class="vcard tile hair" data-pal="${palOf(q)}">
     <button class="vc-main" data-act="think" data-qid="${q.id}">
       ${tagPill(q)}
       <span class="vc-t">${esc(q.text)}</span>
-      <span class="vc-b">${pips(q)}${typePill(q)}<span class="go">${IC.arrow}</span></span>
+      <span class="vc-b">${pips(q)}<span class="tyic" title="${typeOf(q).short}">${IC[typeOf(q).icon]}</span><span class="go">${IC.arrow}</span></span>
     </button>
     <button class="vc-more" data-act="open" data-qid="${q.id}" aria-label="Abrir ficha">${IC.more}</button>
   </article>`;
 
-function ideasSection() {
+BANK.forEach(b => { if (!TAGS[b.tag]) b.tag = guessTag(b.text); });
+const freeIdeas = () => {
   const have = new Set(state.questions.map(q => q.text));
-  const free = BANK.filter(b => !have.has(b.text));
+  return BANK.filter(b => !have.has(b.text));
+};
+const shownIdeas = () => freeIdeas().filter(b => (iTag === 'todas' || b.tag === iTag) && (iType === 'todas' || b.type === iType));
+
+function ideasSection() {
+  const free = freeIdeas();
   if (!free.length) return '';
   const n = Math.min(5, free.length);
   const start = bankOffset % free.length;
   const shown = Array.from({ length: n }, (_, k) => free[(start + k) % free.length]);
   return `
-    <div class="sec"><h2>Ideas para pensar</h2><span>${free.length}</span></div>
+    <div class="sec"><h2>Ideas para pensar</h2><button class="link" data-act="ideas" style="padding:0">Ver las ${free.length}</button></div>
     <div class="car">${shown.map(b => `
       <div class="glass idea">
         <span class="kind">${TYPES[b.type].name}</span>
@@ -411,7 +526,7 @@ function qBody() {
   }).join('');
   return `
     <div class="sec"><h2>Vivas</h2><span>${vi.length} de ${MAX_VIVAS}</span></div>
-    ${vi.length ? `<div class="car">${vi.map(vcard).join('')}</div>` : '<p class="empty">Ninguna. Escribe una arriba.</p>'}
+    ${vi.length ? `<div class="vgrid">${vi.map(vcard).join('')}</div>` : '<p class="empty">Ninguna. Pulsa + para escribir una.</p>'}
 
     ${consult.length ? `
       <div class="sec"><h2>Por consultar</h2><span>${consult.length}</span></div>
@@ -571,6 +686,32 @@ function sheetBody() {
       <p class="tip">${TYPES[newType].hint} El tema se elige solo; puedes cambiarlo después.</p>
       <button class="btn primary wide" data-act="add-q">Añadir ${IC.arrow}</button>
     </div>`;
+  }
+  if (sheet.type === 'ideas') {
+    const free = freeIdeas();
+    const shown = shownIdeas();
+    const count = t => free.filter(b => b.tag === t).length;
+    return `
+      <p class="eyebrow">Ideas para pensar</p>
+      <h2 class="hero sm">${free.length} ideas sin añadir</h2>
+      <div class="hs tagscroll">
+        <button class="chip${iTag === 'todas' ? ' on' : ''}" data-act="i-tag" data-t="todas">Todos <small>${free.length}</small></button>
+        ${Object.keys(TAGS).filter(t => count(t)).map(t => `<button class="chip${iTag === t ? ' on' : ''}" data-act="i-tag" data-t="${t}" style="--c:${TAGS[t].c}"><i></i>${t} <small>${count(t)}</small></button>`).join('')}
+      </div>
+      <div class="seg2 wide" role="group" style="margin-top:10px">
+        <button class="${iType === 'todas' ? 'on' : ''}" data-act="i-type" data-t="todas">Todas</button>
+        <button class="${iType === 'gran' ? 'on' : ''}" data-act="i-type" data-t="gran">Gran pregunta</button>
+        <button class="${iType === 'detalle' ? 'on' : ''}" data-act="i-type" data-t="detalle">Detalle → mapa</button>
+      </div>
+      <div class="ilist">${shown.length ? shown.map(b => `
+        <div class="irow">
+          <div class="ir-body">
+            <span class="ir-m" style="--c:${TAGS[b.tag].c}"><i></i>${b.tag} · ${TYPES[b.type].short}</span>
+            <p>${esc(b.text)}</p>
+          </div>
+          <button class="addbtn" data-act="add-idea" data-i="${BANK.indexOf(b)}" aria-label="Añadir">${IC.plus}</button>
+        </div>`).join('') : '<p class="empty">No quedan ideas con este filtro.</p>'}</div>
+      ${shown.length ? `<button class="btn primary wide" data-act="add-all">Añadir ${shown.length === 1 ? 'esta' : 'las ' + shown.length} a la cola</button>` : ''}`;
   }
   const q = sheet.id ? byId(sheet.id) : current();
   if (sheet.type === 'ruido') {
@@ -752,11 +893,20 @@ function act(name, d, el) {
       return refresh();
     }
     case 'more-ideas': bankOffset += 5; return renderQBody();
+    case 'ideas': iTag = 'todas'; iType = 'todas'; return openSheet({ type: 'ideas' });
+    case 'i-tag': iTag = d.t; return renderSheet();
+    case 'i-type': iType = d.t; return renderSheet();
+    case 'add-all': {
+      const list = shownIdeas();
+      list.forEach(b => state.questions.push(mkQ(b.text, 'cola', 'violet', { type: b.type, tag: b.tag })));
+      refresh();
+      return toast(`Añadidas ${list.length} a la cola`);
+    }
     case 'add-idea': {
       const b = BANK[+d.i];
       if (!b) return;
       const live = vivas().length < MAX_VIVAS;
-      const q = mkQ(b.text, live ? 'viva' : 'cola', 'violet', { type: b.type });
+      const q = mkQ(b.text, live ? 'viva' : 'cola', 'violet', { type: b.type, tag: b.tag });
       state.questions.push(q);
       refresh();
       return toast(live ? `Añadida a tus vivas · ${tagOf(q)}` : `Añadida a la cola · ${tagOf(q)}`);

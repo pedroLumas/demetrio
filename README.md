@@ -8,10 +8,11 @@ App web instalable (PWA) para tener siempre abiertas unas pocas preguntas y volv
   - **Detalle → mapa:** primera explicación → quién lo hizo posible y cuándo → lo que comprobé → qué revela del mundo.
 - **Ruido:** un toque desde cualquier pantalla. Aparca lo trivial y vuelve a la pregunta.
 - **Me falta un dato:** guarda tu predicción antes de consultar y el resultado después.
-- **Preguntas:** las vivas en un carrusel, la cola agrupada por tema, búsqueda, filtros por tema y por tipo.
+- **Preguntas:** todas las vivas a la vez en cuadrícula, la cola agrupada por tema, búsqueda, filtros por tema y por tipo.
   Cada pregunta tiene un tema (Yo, Poder, Roma, Crimen, Dinero, EE. UU., Europa) que se adivina solo y se puede cambiar.
   El color del fondo sigue al tema de la pregunta actual.
-- **Ideas para pensar:** preguntas sugeridas (`BANK` en `app.js`) que se añaden con un toque.
+- **Ideas para pensar:** más de 110 preguntas sugeridas (`BANK` en `app.js`), de los dos tipos. Se añaden una a una
+  o todas las de un filtro a la vez, desde «Ver las N».
 - **Mapa:** áreas de conocimiento con nivel 1–5 en un radar. El hueco de cada área se convierte en pregunta.
 
 Los datos se guardan solo en el navegador del móvil (`localStorage`). Nada sale del dispositivo.
