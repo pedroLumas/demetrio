@@ -342,7 +342,9 @@ function preguntasView() {
           <button class="btn primary wide" data-act="consult-done" data-qid="${q.id}">Guardar como evidencia</button>
         </section>`).join('')}` : ''}
 
-    ${co.length ? `<div class="sec"><h2>En cola</h2><span>${co.length}</span></div><div class="qlist">${co.map(qCard).join('')}</div>` : ''}
+    ${co.length > 6
+      ? fold('cola', 'En cola', co.length, `<div class="qlist">${co.map(qCard).join('')}</div>`)
+      : co.length ? `<div class="sec"><h2>En cola</h2><span>${co.length}</span></div><div class="qlist">${co.map(qCard).join('')}</div>` : ''}
 
     ${ideasSection()}
 

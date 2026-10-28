@@ -1,4 +1,4 @@
-const CACHE = 'pensador-v3';
+const CACHE = 'pensador-v4';
 const ASSETS = [
   './',
   'index.html',
