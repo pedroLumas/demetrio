@@ -153,7 +153,7 @@ function norm(s) {
       if (q.status === 'resuelta') q.status = 'cerrada';
       if (!PALS.includes(q.pal)) q.pal = 'violet';
       if (!Array.isArray(q.evidence)) q.evidence = [];
-      if (!TAGS[q.tag]) q.tag = guessTag(q.text);
+      if (!TAGS[x.tag]) q.tag = guessTag(q.text);
       return q;
     }),
     map: s.map.map(x => ({ ...mkNode(''), ...x })),
