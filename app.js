@@ -4,12 +4,27 @@
 const KEY = 'pensador.v1';
 const MAX_VIVAS = 8;
 const DAY = 864e5;
-const PALS = ['ember', 'ocean', 'violet', 'forest', 'gold', 'rose'];
+const PALS = ['ember', 'ocean', 'violet', 'forest', 'gold', 'rose', 'indigo'];
 const LEVELS = ['Sin puntuar', 'Casi nada', 'Lo básico', 'Defendible', 'Sólido', 'Podría enseñarlo'];
 const TABS = { pensar: 'Pensar', preguntas: 'Preguntas', mapa: 'Mapa' };
+const STATUS = { viva: 'Viva', cola: 'En cola', cerrada: 'Cerrada' };
+
+// Cada tema tiene su color. El fondo de la app toma el color del tema de la pregunta actual.
+const TAGS = {
+  'Yo': { c: '#ff6b8b', pal: 'rose' },
+  'Poder': { c: '#a78bff', pal: 'violet' },
+  'Roma': { c: '#ff8a4c', pal: 'ember' },
+  'Crimen': { c: '#f4b942', pal: 'gold' },
+  'Dinero': { c: '#3fd69a', pal: 'forest' },
+  'EE. UU.': { c: '#36c8dc', pal: 'ocean' },
+  'Europa': { c: '#7d8cff', pal: 'indigo' },
+};
+
 const TYPES = {
   gran: {
     name: 'Gran pregunta',
+    short: 'Gran pregunta',
+    icon: 'layers',
     hint: 'Para volver a ella muchas veces. Sin prisa por cerrarla.',
     steps: [
       { key: 'hypothesis', name: 'Hipótesis', title: 'Tu hipótesis', help: 'Una frase. Aunque sea mala.', ph: 'Creo que…' },
@@ -24,6 +39,8 @@ const TYPES = {
   },
   detalle: {
     name: 'Detalle → mapa',
+    short: 'Detalle → mapa',
+    icon: 'zoom',
     hint: 'De algo concreto que viste al plano general. Se resuelve y se cierra.',
     steps: [
       { key: 'hypothesis', name: 'Explicación', title: 'Tu primera explicación', help: '¿Cómo es posible? Lo primero que se te ocurra.', ph: 'Es posible porque…' },
@@ -59,27 +76,52 @@ const BANK = [
   { type: 'gran', text: '¿Qué hace que una civilización se derrumbe?' },
 ];
 
-const svg = d => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+/* ---------- iconos ---------- */
+const svg = (d, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
 const IC = {
   pensar: svg('<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 16.5v3.2M16.9 18.1h3.2"/>'),
   preguntas: svg('<circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.4 2.4 0 1 1 3.5 2.1c-.8.4-1.2 1-1.2 1.8"/><path d="M12 16.8v.2"/>'),
   mapa: svg('<path d="M12 3.5l8 5.8-3 9.4H7l-3-9.4z"/><path d="M12 3.5v8.7M12 12.2L4 9.3M12 12.2l8-2.9M12 12.2l-5 6.5M12 12.2l5 6.5"/>'),
   wave: svg('<path d="M4 11.5v1M8 8.5v7M12 5v14M16 8.5v7M20 11.5v1"/>'),
+  plus: svg('<path d="M12 5v14M5 12h14"/>'),
+  search: svg('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>'),
+  x: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  chevR: svg('<path d="M9 6l6 6-6 6"/>'),
+  chevD: svg('<path d="M6 9l6 6 6-6"/>'),
+  arrow: svg('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+  more: svg('<circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>', 'fill'),
+  layers: svg('<path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/>', 'sm'),
+  zoom: svg('<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4M11 8.5v5M8.5 11h5"/>', 'sm'),
 };
 
+/* ---------- utilidades ---------- */
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
 const fmtDay = t => new Date(t).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 const short = t => (t.length > 42 ? t.slice(0, 41) + '…' : t);
+const fold1 = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const ago = t => {
   if (!t) return 'nunca';
   const d = Math.floor((Date.now() - t) / DAY);
   return d <= 0 ? 'hoy' : d === 1 ? 'ayer' : `hace ${d} días`;
 };
 
+// Adivina el tema por palabras clave. Se puede cambiar a mano en la ficha.
+function guessTag(text) {
+  const t = ' ' + fold1(text).replace(/[^a-z0-9. ]+/g, ' ') + ' ';
+  const has = (...w) => w.some(x => t.includes(x));
+  if (has(' mi ', ' mis ', ' yo ', ' me ', ' debo ', ' prefiero ', ' quiero ', 'importarme', 'nuestra atencion', ' sigo ', 'cotidiano')) return 'Yo';
+  if (has('ee. uu', 'ee uu', 'estados unidos', 'washington', 'lincoln', 'rockefeller', 'padres fundadores', 'standard oil')) return 'EE. UU.';
+  if (has(' roma', 'romano', 'romana', ' cesar', 'trajano', 'adriano', ' sila ', 'pretoriano', ' severo', 'caracalla', ' decio', 'maximino', 'marco aurelio', 'seneca', ' neron', 'pompeyo', 'augusto', 'senado', 'legion', 'emperador')) return 'Roma';
+  if (has('escobar', 'capone', 'ley seca', 'chapo', 'provenzano', 'mafia', ' maras', 'carteles', 'padrino', 'narco', 'cocaina', 'crack', ' gta')) return 'Crimen';
+  if (has('felipe ii', 'franco', 'napoleon', 'prusia', 'bismarck', 'espana', 'alemania', 'junkers', 'imperio espanol')) return 'Europa';
+  if (has(' rico', 'riqueza', 'dinero', 'banco', 'bancarrota', 'amazon', 'zara', 'ortega', 'marketplace', 'apuestas', 'movil', 'cobalto', 'suez', 'casinos', 'lehman', 'carnegie', 'petroleo', 'dolar', 'bolso', 'tiktok', 'herederos', 'deuda', 'economia')) return 'Dinero';
+  return 'Poder';
+}
+
 const mkQ = (text, status = 'cola', pal = 'violet', extra = {}) => ({
-  id: uid(), text, status, pal,
+  id: uid(), text, status, pal, tag: guessTag(text),
   type: 'gran', hypothesis: '', refutation: '', chain: '', evidence: [],
   missing: '', prediction: '', consult: false, conclusion: '',
   created: Date.now(), updated: Date.now(), touched: 0, closedAt: 0, ...extra,
@@ -111,6 +153,7 @@ function norm(s) {
       if (q.status === 'resuelta') q.status = 'cerrada';
       if (!PALS.includes(q.pal)) q.pal = 'violet';
       if (!Array.isArray(q.evidence)) q.evidence = [];
+      if (!TAGS[q.tag]) q.tag = guessTag(q.text);
       return q;
     }),
     map: s.map.map(x => ({ ...mkNode(''), ...x })),
@@ -119,6 +162,7 @@ function norm(s) {
   };
 }
 
+/* ---------- estado ---------- */
 let storageOk = true;
 let state = load();
 let view = 'pensar';
@@ -127,6 +171,9 @@ let editing = null;
 let draft = '';
 let newType = 'gran';
 let bankOffset = 0;
+let query = '';
+let fType = 'todas';
+let fTag = 'todas';
 const folds = new Set();
 const gapOpen = new Set();
 let saveT = 0;
@@ -168,6 +215,8 @@ function toast(msg) {
 const byId = id => state.questions.find(x => x.id === id);
 const vivas = () => state.questions.filter(x => x.status === 'viva');
 const typeOf = q => TYPES[q.type] || TYPES.gran;
+const tagOf = q => (TAGS[q.tag] ? q.tag : 'Poder');
+const palOf = q => TAGS[tagOf(q)].pal;
 const stageIdx = q => {
   const i = typeOf(q).steps.findIndex(s => !q[s.key].trim());
   return i < 0 ? typeOf(q).steps.length : i;
@@ -192,9 +241,19 @@ function current() {
   saveSoon();
   return n;
 }
+function step(dir) {
+  const v = vivas();
+  if (v.length < 2) return;
+  const i = Math.max(0, v.findIndex(x => x.id === state.meta.cur));
+  const n = v[(i + dir + v.length) % v.length];
+  state.meta.cur = n.id;
+  n.touched = Date.now();
+  editing = null;
+  refresh(true);
+  window.scrollTo(0, 0);
+}
 
-/* ---------- vistas ---------- */
-
+/* ---------- piezas ---------- */
 function fit(el) {
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 2 + 'px';
@@ -203,7 +262,17 @@ const fitAll = root => (root || document).querySelectorAll('textarea.auto').forE
 
 const field = (q, key, ph, extra = '') =>
   `<textarea class="auto ${extra}" rows="2" data-f="${key}" data-qid="${q.id}" placeholder="${ph}">${esc(q[key])}</textarea>`;
+const tagPill = q => `<span class="tagpill" style="--c:${TAGS[tagOf(q)].c}"><i></i>${esc(tagOf(q))}</span>`;
+const typePill = q => `<span class="typepill">${IC[typeOf(q).icon]}${typeOf(q).short}</span>`;
+const pips = q => `<span class="pips">${[0, 1, 2].map(k => `<i class="${k < progress(q) ? 'on' : ''}"></i>`).join('')}</span>`;
 
+const group = (id, titleHtml, count, inner) => `
+  <details class="group" data-fold="${id}"${folds.has(id) ? ' open' : ''}>
+    <summary>${titleHtml}<span class="n">${count}</span>${IC.chevD}</summary>
+    <div class="gbody">${inner}</div>
+  </details>`;
+
+/* ---------- pensar ---------- */
 const stepCard = (q, s, editMode) => `
   <section class="glass step">
     <div class="step-h"><b>${typeOf(q).steps.indexOf(s) + 1}</b><span>${s.title}</span></div>
@@ -211,11 +280,11 @@ const stepCard = (q, s, editMode) => `
     ${field(q, s.key, s.ph)}
     ${editMode
       ? '<button class="btn primary wide" data-act="done-edit">Listo</button>'
-      : `<button class="btn primary wide" data-act="next-step" data-gate${q[s.key].trim() ? '' : ' disabled'}>Seguir</button>`}
+      : `<button class="btn primary wide" data-act="next-step" data-gate${q[s.key].trim() ? '' : ' disabled'}>Seguir ${IC.arrow}</button>`}
   </section>`;
 
 const quoteBtn = (q, s) => `
-  <button class="quote" data-act="edit-step" data-step="${s.key}">
+  <button class="quote hair" data-act="edit-step" data-step="${s.key}">
     <small>${s.name}</small><span>${esc(q[s.key])}</span>
   </button>`;
 
@@ -229,8 +298,8 @@ function evidenceCard(q) {
     ${last.map(e => `<div class="ev"><time>${fmtDay(e.t)}</time><span>${esc(e.text)}</span></div>`).join('')}
     ${n > 3 ? `<button class="link" data-act="open" data-qid="${q.id}">Ver las ${n}</button>` : ''}
     <div class="evadd">
-      <input type="text" placeholder="Añadir un dato…" enterkeyhint="done" aria-label="Nueva evidencia">
-      <button class="btn primary icon" data-act="add-ev" data-qid="${q.id}" aria-label="Añadir">+</button>
+      <input type="text" data-enter="add-ev" placeholder="Añadir un dato…" enterkeyhint="done" aria-label="Nueva evidencia">
+      <button class="btn primary icon" data-act="add-ev" data-qid="${q.id}" aria-label="Añadir">${IC.plus}</button>
     </div>
   </section>
   <div class="actions">
@@ -246,7 +315,7 @@ function pensarView(q) {
       <h2 class="hero">¿Qué te gustaría entender de verdad?</h2>
       <section class="glass step">
         <textarea class="auto" id="first-q" rows="2" placeholder="Escribe una pregunta abierta…">${esc(draft)}</textarea>
-        <button class="btn primary wide" data-act="add-q">Empezar a pensar</button>
+        <button class="btn primary wide" data-act="add-q">Empezar a pensar ${IC.arrow}</button>
       </section>`;
   }
   const v = vivas();
@@ -259,75 +328,90 @@ function pensarView(q) {
   const now = idx >= T.steps.length ? evidenceCard(q) : stepCard(q, T.steps[idx], false);
   return `
     <div class="top-eyebrow">
-      <span class="eyebrow">${v.indexOf(q) + 1}/${v.length} · ${T.name}</span>
+      <span class="eyebrow">${v.indexOf(q) + 1} / ${v.length}</span>
       <div class="dots" style="--dw:${Math.min(26, Math.floor(150 / v.length))}px">${v.map(x => `<button class="dot${x === q ? ' on' : ''}" data-act="pick" data-qid="${x.id}" aria-label="Ir a la pregunta"></button>`).join('')}</div>
     </div>
+    <div class="chips-row">${tagPill(q)}${typePill(q)}</div>
     <h2 class="hero${q.text.length > 110 ? ' xl' : q.text.length > 70 ? ' lg' : ''}">${esc(q.text)}</h2>
-    ${q.seed ? '<p class="tip">Pregunta de ejemplo. Cámbiala por la tuya en Preguntas.</p>' : ''}
+    ${q.seed ? '<p class="tip" style="margin:-12px 0 18px">Pregunta de ejemplo. Cámbiala por la tuya en Preguntas.</p>' : ''}
     <ol class="rail">${rail}</ol>
     ${quotes}
     ${now}
-    ${v.length > 1 ? '<div class="center"><button class="link" data-act="next">Otra pregunta</button></div>' : ''}`;
+    ${v.length > 1 ? `<div class="center"><button class="link" data-act="next">Otra pregunta ${IC.arrow.replace('class="ic ', 'class="ic sm ')}</button></div>` : ''}`;
 }
 
-const qCard = q => `
-  <button class="qcard" data-act="open" data-qid="${q.id}" data-pal="${q.pal}">
-    <i class="swatch"></i>
-    <div>
-      <div class="t">${esc(q.text)}</div>
-      <div class="m">
-        <span class="pips">${[0, 1, 2].map(k => `<i class="${k < progress(q) ? 'on' : ''}"></i>`).join('')}</span>
-        <span>${typeOf(q).name}</span>
-        ${q.evidence.length ? `<span>${q.evidence.length} evid.</span>` : ''}
-        ${q.consult ? '<span>por consultar</span>' : ''}
-        ${q.seed ? '<span>ejemplo</span>' : ''}
-      </div>
-    </div>
+/* ---------- preguntas ---------- */
+const qRow = (q, showStatus) => `
+  <button class="qrow hair" data-act="open" data-qid="${q.id}">
+    <i class="dotc" style="--c:${TAGS[tagOf(q)].c}"></i>
+    <span class="qr-body">
+      <span class="qr-t">${esc(q.text)}</span>
+      <span class="qr-m">${esc(tagOf(q))} · ${typeOf(q).short}${q.evidence.length ? ` · ${q.evidence.length} evid.` : ''}${q.consult ? ' · por consultar' : ''}${q.seed ? ' · ejemplo' : ''}</span>
+    </span>
+    <span class="qr-r">${showStatus ? `<em class="st st-${q.status}">${STATUS[q.status]}</em>` : progress(q) ? pips(q) : ''}${IC.chevR}</span>
   </button>`;
 
-const fold = (id, title, count, inner) => `
-  <details class="fold" data-fold="${id}"${folds.has(id) ? ' open' : ''}>
-    <summary><div>${title}<span>${count}</span></div></summary>
-    ${inner}
-  </details>`;
+const vcard = q => `
+  <article class="vcard hair" data-pal="${palOf(q)}">
+    <button class="vc-main" data-act="think" data-qid="${q.id}">
+      ${tagPill(q)}
+      <span class="vc-t">${esc(q.text)}</span>
+      <span class="vc-b">${pips(q)}${typePill(q)}<span class="go">${IC.arrow}</span></span>
+    </button>
+    <button class="vc-more" data-act="open" data-qid="${q.id}" aria-label="Abrir ficha">${IC.more}</button>
+  </article>`;
 
 function ideasSection() {
   const have = new Set(state.questions.map(q => q.text));
   const free = BANK.filter(b => !have.has(b.text));
   if (!free.length) return '';
-  const n = Math.min(4, free.length);
+  const n = Math.min(5, free.length);
   const start = bankOffset % free.length;
   const shown = Array.from({ length: n }, (_, k) => free[(start + k) % free.length]);
   return `
     <div class="sec"><h2>Ideas para pensar</h2><span>${free.length}</span></div>
-    <div class="qlist">${shown.map(b => `
+    <div class="car">${shown.map(b => `
       <div class="glass idea">
         <span class="kind">${TYPES[b.type].name}</span>
         <p>${esc(b.text)}</p>
-        <button class="btn ghost sm" data-act="add-idea" data-i="${BANK.indexOf(b)}">+ Añadir</button>
+        <button class="btn ghost sm" data-act="add-idea" data-i="${BANK.indexOf(b)}">${IC.plus} Añadir</button>
       </div>`).join('')}</div>
-    ${free.length > n ? '<div class="center"><button class="link" data-act="more-ideas">Otras ideas</button></div>' : ''}`;
+    ${free.length > n ? `<div class="center"><button class="link" data-act="more-ideas">Otras ideas</button></div>` : ''}`;
 }
 
-function preguntasView() {
+function matchQ(q) {
+  if (fType !== 'todas' && q.type !== fType) return false;
+  if (fTag !== 'todas' && tagOf(q) !== fTag) return false;
+  const words = fold1(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const hay = fold1([q.text, q.hypothesis, q.refutation, q.chain, q.conclusion, tagOf(q), ...q.evidence.map(e => e.text)].join(' '));
+  return words.every(w => hay.includes(w));
+}
+
+function qBody() {
   const qs = state.questions;
+  const filtering = query.trim() || fType !== 'todas' || fTag !== 'todas';
+  if (filtering) {
+    const order = { viva: 0, cola: 1, cerrada: 2 };
+    const res = qs.filter(matchQ).sort((a, b) => order[a.status] - order[b.status] || b.updated - a.updated);
+    return `
+      <div class="sec"><h2>${res.length} ${res.length === 1 ? 'resultado' : 'resultados'}</h2><button class="link" data-act="f-clear" style="padding:0">Quitar filtros</button></div>
+      <div class="qlist">${res.length ? res.map(q => qRow(q, true)).join('') : '<p class="empty">Nada coincide. Prueba con otra palabra o quita un filtro.</p>'}</div>`;
+  }
   const vi = qs.filter(q => q.status === 'viva');
   const co = qs.filter(q => q.status === 'cola');
   const ce = qs.filter(q => q.status === 'cerrada').sort((a, b) => b.closedAt - a.closedAt);
   const consult = qs.filter(q => q.consult && q.status !== 'cerrada');
   const parked = state.parked;
   const stale = !state.meta.lastExport || Date.now() - state.meta.lastExport > 14 * DAY;
+  const colaGroups = Object.keys(TAGS).map(tag => {
+    const items = co.filter(q => tagOf(q) === tag);
+    if (!items.length) return '';
+    return group('g-' + tag, `<i class="dotc" style="--c:${TAGS[tag].c}"></i>${tag}`, items.length, `<div class="qlist">${items.map(q => qRow(q)).join('')}</div>`);
+  }).join('');
   return `
-    <h1 class="title">Preguntas</h1>
-    <div class="glass addbar">
-      <input type="text" id="new-q" placeholder="Nueva pregunta…" value="${esc(draft)}" enterkeyhint="done" aria-label="Nueva pregunta">
-      <button class="btn primary icon" data-act="add-q" aria-label="Añadir">+</button>
-    </div>
-    <div class="chips tight">${Object.keys(TYPES).map(k => `<button class="chip${k === newType ? ' on' : ''}" data-act="new-type" data-t="${k}">${TYPES[k].name}</button>`).join('')}</div>
-    <p class="tip" style="margin:8px 4px 0">${TYPES[newType].hint}</p>
-
     <div class="sec"><h2>Vivas</h2><span>${vi.length} de ${MAX_VIVAS}</span></div>
-    <div class="qlist">${vi.length ? vi.map(qCard).join('') : '<p class="empty">Ninguna. Añade una arriba.</p>'}</div>
+    ${vi.length ? `<div class="car">${vi.map(vcard).join('')}</div>` : '<p class="empty">Ninguna. Escribe una arriba.</p>'}
 
     ${consult.length ? `
       <div class="sec"><h2>Por consultar</h2><span>${consult.length}</span></div>
@@ -342,25 +426,56 @@ function preguntasView() {
           <button class="btn primary wide" data-act="consult-done" data-qid="${q.id}">Guardar como evidencia</button>
         </section>`).join('')}` : ''}
 
-    ${co.length > 6
-      ? fold('cola', 'En cola', co.length, `<div class="qlist">${co.map(qCard).join('')}</div>`)
-      : co.length ? `<div class="sec"><h2>En cola</h2><span>${co.length}</span></div><div class="qlist">${co.map(qCard).join('')}</div>` : ''}
-
     ${ideasSection()}
 
-    ${ce.length ? fold('cerradas', 'Cerradas', ce.length, `<div class="qlist">${ce.map(qCard).join('')}</div>`) : ''}
+    ${co.length ? `<div class="sec"><h2>En cola</h2><span>${co.length}</span></div>${colaGroups}` : ''}
 
-    ${fold('parked', 'Aparcado', parked.length, parked.length
-      ? `<div class="glass">${parked.map(p => `<div class="ev"><time>${fmtDay(p.t)}</time><span>${esc(p.text)}</span><button class="x" data-act="unpark" data-pid="${p.id}" aria-label="Quitar">×</button></div>`).join('')}<p class="tip" style="margin:10px 0 0">Si no importa a medio plazo, bórralo.</p></div>`
+    ${ce.length ? `<div class="sec"><h2>Archivo</h2><span></span></div>${group('cerradas', 'Cerradas', ce.length, `<div class="qlist">${ce.map(q => qRow(q)).join('')}</div>`)}` : ''}
+
+    <div class="sec"><h2>Utilidades</h2><span></span></div>
+    ${group('parked', 'Aparcado', parked.length, parked.length
+      ? `<div class="glass">${parked.map(p => `<div class="ev"><time>${fmtDay(p.t)}</time><span>${esc(p.text)}</span><button class="x" data-act="unpark" data-pid="${p.id}" aria-label="Quitar">${IC.x}</button></div>`).join('')}<p class="tip" style="margin:10px 0 0">Si no importa a medio plazo, bórralo.</p></div>`
       : '<p class="empty">Nada aparcado.</p>')}
-
-    ${fold('backup', 'Copia de seguridad', stale ? '!' : ago(state.meta.lastExport), `
+    ${group('backup', 'Copia de seguridad', stale ? 'hazla' : ago(state.meta.lastExport), `
       <div class="glass">
         <p class="help">Tus datos viven solo en este móvil. Guarda una copia de vez en cuando.</p>
         <div class="row"><button class="btn primary sm" data-act="export">Exportar</button><button class="btn ghost sm" data-act="import">Importar</button></div>
       </div>`)}`;
 }
 
+function preguntasView() {
+  const qs = state.questions;
+  const vi = qs.filter(q => q.status === 'viva').length;
+  const filtering = query.trim() || fType !== 'todas' || fTag !== 'todas';
+  return `
+    <div class="titlerow">
+      <div>
+        <h1 class="title">Preguntas</h1>
+        <p class="sub" style="margin:0">${qs.length} en total · ${vi} vivas</p>
+      </div>
+      <button class="btn primary fab" data-act="nueva" aria-label="Nueva pregunta">${IC.plus}</button>
+    </div>
+
+    <div class="glass search" style="padding:0 8px 0 16px">
+      ${IC.search}
+      <input type="search" id="search" placeholder="Buscar entre ${qs.length} preguntas…" value="${esc(query)}" enterkeyhint="search" aria-label="Buscar">
+      <button class="x" id="search-x" data-act="search-clear" aria-label="Borrar búsqueda"${query ? '' : ' hidden'}>${IC.x}</button>
+    </div>
+    <div class="filters">
+      <div class="hs">
+        <button class="chip${fTag === 'todas' ? ' on' : ''}" data-act="f-tag" data-t="todas">Todos los temas</button>
+        ${Object.keys(TAGS).map(t => `<button class="chip${fTag === t ? ' on' : ''}" data-act="f-tag" data-t="${t}" style="--c:${TAGS[t].c}"><i></i>${t}</button>`).join('')}
+      </div>
+      <div class="seg2 wide" role="group">
+        <button class="${fType === 'todas' ? 'on' : ''}" data-act="f-type" data-t="todas">Todas</button>
+        <button class="${fType === 'gran' ? 'on' : ''}" data-act="f-type" data-t="gran">Gran pregunta</button>
+        <button class="${fType === 'detalle' ? 'on' : ''}" data-act="f-type" data-t="detalle">Detalle → mapa</button>
+      </div>
+    </div>
+    <div id="qbody">${qBody()}</div>`;
+}
+
+/* ---------- mapa ---------- */
 function radar() {
   const m = state.map;
   const n = m.length;
@@ -395,46 +510,68 @@ function radar() {
 }
 
 function mapaView() {
-  const rated = state.map.filter(n => n.level).length;
+  const rated = state.map.filter(n => n.level);
+  const avg = rated.length ? (rated.reduce((a, n) => a + n.level, 0) / rated.length).toFixed(1).replace('.', ',') : '–';
   return `
     <h1 class="title">Mapa</h1>
-    <p class="lead">${rated ? 'Lo que sabes, de un vistazo. Los huecos se convierten en preguntas.' : 'Puntúa cada área de 1 a 5 y verás tu mapa. Sé honesto.'}</p>
+    <p class="sub">${state.map.length} áreas · nivel medio ${avg}</p>
     <div class="glass radar">${radar()}</div>
+    <p class="lead">${rated.length ? 'Los huecos se convierten en preguntas.' : 'Puntúa cada área de 1 a 5 y verás tu mapa. Sé honesto.'}</p>
     ${state.map.map(n => `
       <div class="glass node">
         <div class="node-h">
           <input class="nname" type="text" data-mf="name" data-mid="${n.id}" value="${esc(n.name)}" aria-label="Nombre del área">
-          <button class="x" data-act="del-node" data-mid="${n.id}" aria-label="Borrar área">×</button>
+          <button class="x" data-act="del-node" data-mid="${n.id}" aria-label="Borrar área">${IC.x}</button>
         </div>
         <div class="segs">${[1, 2, 3, 4, 5].map(l => `<button class="seg${l <= n.level ? ' on' : ''}" data-act="lvl" data-mid="${n.id}" data-l="${l}" aria-label="Nivel ${l}"></button>`).join('')}</div>
         <p class="lvl-name">${LEVELS[n.level]}</p>
         ${gapOpen.has(n.id) || n.gap.trim()
           ? `<textarea class="auto" rows="2" data-mf="gap" data-mid="${n.id}" placeholder="Lo que no sé y quisiera saber">${esc(n.gap)}</textarea>
              <button class="btn ghost sm" data-act="gap-q" data-mid="${n.id}">Convertir en pregunta</button>`
-          : `<button class="link" data-act="gap-open" data-mid="${n.id}">+ Hueco</button>`}
+          : `<button class="link" data-act="gap-open" data-mid="${n.id}">${IC.plus.replace('class="ic ', 'class="ic sm ')} Hueco</button>`}
       </div>`).join('')}
-    <div class="glass addbar">
-      <input type="text" id="new-node" placeholder="Nueva área…" enterkeyhint="done" aria-label="Nueva área">
-      <button class="btn primary icon" data-act="add-node" aria-label="Añadir">+</button>
+    <div class="glass addrow">
+      <input type="text" id="new-node" data-enter="add-node" placeholder="Nueva área…" enterkeyhint="done" aria-label="Nueva área">
+      <button class="btn primary icon" data-act="add-node" aria-label="Añadir">${IC.plus}</button>
     </div>`;
+}
+
+/* ---------- marco ---------- */
+function renderTabs() {
+  const nav = $('#tabs');
+  const keys = Object.keys(TABS);
+  if (!nav.children.length) {
+    nav.innerHTML = `<i class="ind"></i>${keys.map(k => `<button data-go="${k}" aria-label="${TABS[k]}">${IC[k]}<span>${TABS[k]}</span></button>`).join('')}`;
+  }
+  nav.style.setProperty('--i', keys.indexOf(view));
+  [...nav.querySelectorAll('button')].forEach((b, i) => b.classList.toggle('on', keys[i] === view));
 }
 
 function render(animate) {
   const q = current();
-  document.body.dataset.pal = q ? q.pal : 'violet';
+  document.body.dataset.pal = q ? palOf(q) : 'violet';
   const body = { pensar: () => pensarView(q), preguntas: preguntasView, mapa: mapaView }[view]();
   const date = new Date().toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).replace('.', '');
   $('#app').innerHTML = `
     ${storageOk ? '' : '<p class="warn">No puedo guardar en este navegador. Exporta una copia en Preguntas.</p>'}
-    <header class="bar"><span class="date">${date}</span><button class="pill" data-act="ruido">${IC.wave}<span>Ruido</span></button></header>
-    <main class="view${animate ? ' enter' : ''}">${body}</main>
-    <nav class="tabs" aria-label="Secciones">${Object.keys(TABS).map(k => `<button class="${k === view ? 'on' : ''}" data-go="${k}">${IC[k]}<span>${TABS[k]}</span></button>`).join('')}</nav>`;
+    <header class="bar"><span class="date">${date}</span><button class="pill hair" data-act="ruido">${IC.wave}<span>Ruido</span></button></header>
+    <main class="view${animate ? ' enter' : ''}">${body}</main>`;
+  renderTabs();
   fitAll($('#app'));
 }
 
 /* ---------- hojas ---------- */
-
 function sheetBody() {
+  if (sheet.type === 'nueva') {
+    return `<div class="newbox">
+      <p class="eyebrow">Nueva pregunta</p>
+      <textarea class="auto sheet-serif" id="new-q" data-enter="add-q" rows="2" placeholder="Escribe tu pregunta…" aria-label="Nueva pregunta" style="margin-top:14px">${esc(draft)}</textarea>
+      <label>Tipo</label>
+      <div class="seg2 wide" role="group">${Object.keys(TYPES).map(k => `<button class="${k === newType ? 'on' : ''}" data-act="new-type" data-t="${k}">${TYPES[k].name}</button>`).join('')}</div>
+      <p class="tip">${TYPES[newType].hint} El tema se elige solo; puedes cambiarlo después.</p>
+      <button class="btn primary wide" data-act="add-q">Añadir ${IC.arrow}</button>
+    </div>`;
+  }
   const q = sheet.id ? byId(sheet.id) : current();
   if (sheet.type === 'ruido') {
     if (!q) {
@@ -445,8 +582,8 @@ function sheetBody() {
       <h2 class="hero sm">${esc(q.text)}</h2>
       <div class="parkbox">
         <label>¿Qué te ronda? Queda aparcado, no se pierde.</label>
-        <input type="text" id="park-input" placeholder="p. ej. qué le digo a…" enterkeyhint="done">
-        <button class="btn primary wide" style="margin-top:14px" data-act="park-return">Aparcar y pensar</button>
+        <input type="text" id="park-input" data-enter="park-return" placeholder="p. ej. qué le digo a…" enterkeyhint="done">
+        <button class="btn primary wide" data-act="park-return">Aparcar y pensar ${IC.arrow}</button>
       </div>
       <div class="center"><button class="link" data-act="close-sheet">Solo volver</button></div>`;
   }
@@ -458,27 +595,31 @@ function sheetBody() {
       ${field(q, 'missing', 'Lo que no sé y bloquea mi razonamiento', 'sheet-serif')}
       <label>¿Qué crees que dirá la fuente o la IA?</label>
       ${field(q, 'prediction', 'Mi predicción antes de mirar', 'sheet-serif')}
-      <button class="btn primary wide" style="margin-top:18px" data-act="falta-save" data-qid="${q.id}">Guardar para consultar</button>`;
+      <button class="btn primary wide" data-act="falta-save" data-qid="${q.id}">Guardar para consultar</button>`;
   }
   if (sheet.type === 'cerrar') {
     return `<p class="eyebrow">Cerrar pregunta</p>
       <h2 class="hero sm">${esc(q.text)}</h2>
       <label>${typeOf(q).closeLabel}</label>
       ${field(q, 'conclusion', typeOf(q).closePh, 'sheet-serif')}
-      <button class="btn primary wide" style="margin-top:18px" data-act="close-q" data-qid="${q.id}">Cerrar</button>`;
+      <button class="btn primary wide" data-act="close-q" data-qid="${q.id}">Cerrar pregunta</button>`;
   }
   const ro = (label, t) => (t.trim() ? `<label>${label}</label><div class="ro"><p>${esc(t)}</p></div>` : '');
-  return `<p class="eyebrow">Ficha</p>
-    <textarea class="auto sheet-serif" rows="2" data-f="text" data-qid="${q.id}" aria-label="Pregunta" style="margin-top:12px">${esc(q.text)}</textarea>
-    <div class="chips">
-      ${[['viva', 'Viva'], ['cola', 'En cola'], ['cerrada', 'Cerrada']].map(([s, l]) => `<button class="chip${q.status === s ? ' on' : ''}" data-act="status" data-qid="${q.id}" data-s="${s}">${l}</button>`).join('')}
-    </div>
-    <div class="chips tight">${Object.keys(TYPES).map(k => `<button class="chip${q.type === k ? ' on' : ''}" data-act="set-type" data-qid="${q.id}" data-t="${k}">${TYPES[k].name}</button>`).join('')}</div>
+  return `
+    <div class="head">${tagPill(q)}${typePill(q)}<em class="st st-${q.status}">${STATUS[q.status]}</em></div>
+    <textarea class="auto sheet-serif" rows="2" data-f="text" data-qid="${q.id}" aria-label="Pregunta" style="margin-top:16px">${esc(q.text)}</textarea>
+    <button class="btn primary wide" data-act="think" data-qid="${q.id}">${q.status === 'cerrada' ? 'Retomar' : q.status === 'viva' ? 'Pensar en esta' : 'Hacerla viva y pensar'} ${IC.arrow}</button>
+    <label>Estado</label>
+    <div class="seg2 wide" role="group">${Object.keys(STATUS).map(s => `<button class="${q.status === s ? 'on' : ''}" data-act="status" data-qid="${q.id}" data-s="${s}">${STATUS[s]}</button>`).join('')}</div>
+    <label>Tipo</label>
+    <div class="seg2 wide" role="group">${Object.keys(TYPES).map(k => `<button class="${q.type === k ? 'on' : ''}" data-act="set-type" data-qid="${q.id}" data-t="${k}">${TYPES[k].name}</button>`).join('')}</div>
+    <label>Tema</label>
+    <div class="hs tagscroll">${Object.keys(TAGS).map(t => `<button class="chip${tagOf(q) === t ? ' on' : ''}" data-act="set-tag" data-qid="${q.id}" data-t="${t}" style="--c:${TAGS[t].c}"><i></i>${t}</button>`).join('')}</div>
     ${typeOf(q).steps.map(s => ro(s.title, q[s.key])).join('')}${ro(typeOf(q).conclLabel, q.conclusion)}
-    ${q.evidence.length ? `<label>Evidencia</label>${q.evidence.map((e, i) => `<div class="ev"><time>${fmtDay(e.t)}</time><span>${esc(e.text)}</span><button class="x" data-act="del-ev" data-qid="${q.id}" data-i="${i}" aria-label="Borrar">×</button></div>`).join('')}` : ''}
-    <div class="row between" style="margin-top:22px">
-      <button class="link danger" data-act="del-q" data-qid="${q.id}">Borrar</button>
-      <button class="btn primary" data-act="close-sheet">Listo</button>
+    ${q.evidence.length ? `<label>Evidencia</label>${q.evidence.map((e, i) => `<div class="ev"><time>${fmtDay(e.t)}</time><span>${esc(e.text)}</span><button class="x" data-act="del-ev" data-qid="${q.id}" data-i="${i}" aria-label="Borrar">${IC.x}</button></div>`).join('')}` : ''}
+    <div class="row between" style="margin-top:26px">
+      <button class="link danger" data-act="del-q" data-qid="${q.id}">Borrar pregunta</button>
+      <button class="btn ghost sm" data-act="close-sheet">Listo</button>
     </div>`;
 }
 
@@ -509,7 +650,6 @@ function closeSheet() {
 }
 
 /* ---------- acciones ---------- */
-
 function go(v) {
   if (!TABS[v]) return;
   view = v;
@@ -542,10 +682,38 @@ function addQuestion() {
   const text = draft.trim();
   if (!text) return toast('Escribe la pregunta primero.');
   const live = vivas().length < MAX_VIVAS;
-  state.questions.push(mkQ(text, live ? 'viva' : 'cola', PALS[state.questions.length % PALS.length], { type: newType }));
+  const q = mkQ(text, live ? 'viva' : 'cola', 'violet', { type: newType });
+  state.questions.push(q);
   draft = '';
+  sheet = null;
   refresh(true);
-  toast(live ? 'Añadida a tus vivas.' : `Añadida a la cola. Ya tienes ${MAX_VIVAS} vivas.`);
+  toast(live ? `Añadida a tus vivas · ${tagOf(q)}` : `Añadida a la cola · ${tagOf(q)}`);
+}
+
+function think(q) {
+  if (q.status !== 'viva') {
+    if (vivas().length >= MAX_VIVAS) return toast(`Ya tienes ${MAX_VIVAS} vivas. Pasa una a cola primero.`);
+    q.status = 'viva';
+    q.closedAt = 0;
+  }
+  state.meta.cur = q.id;
+  q.touched = Date.now();
+  q.updated = Date.now();
+  editing = null;
+  sheet = null;
+  view = 'pensar';
+  try { history.replaceState(null, '', '#pensar'); } catch (e) { /* ignorar */ }
+  save();
+  renderSheet();
+  render(true);
+  window.scrollTo(0, 0);
+}
+
+function renderQBody() {
+  const el = $('#qbody');
+  if (!el) return;
+  el.innerHTML = qBody();
+  fitAll(el);
 }
 
 function act(name, d, el) {
@@ -557,7 +725,9 @@ function act(name, d, el) {
       if (q) { state.meta.cur = q.id; q.touched = Date.now(); editing = null; }
       return refresh(true);
     }
-    case 'next': editing = null; pickCurrent(state.meta.cur); return refresh(true);
+    case 'next': return step(1);
+    case 'prev': return step(-1);
+    case 'think': { const q = byId(d.qid); return q && think(q); }
     case 'next-step': render(); return focusStep();
     case 'edit-step': editing = d.step; render(); return focusStep();
     case 'done-edit': editing = null; return render();
@@ -565,20 +735,31 @@ function act(name, d, el) {
     case 'falta': return openSheet({ type: 'falta', id: d.qid });
     case 'cerrar': return openSheet({ type: 'cerrar', id: d.qid });
     case 'add-q': return addQuestion();
-    case 'new-type': newType = d.t; return render();
+    case 'nueva': openSheet({ type: 'nueva' }); { const i = $('#new-q'); if (i) i.focus(); } return;
+    case 'new-type': newType = d.t; return renderSheet();
+    case 'f-tag': fTag = d.t; return render();
+    case 'f-type': fType = d.t; return render();
+    case 'f-clear': query = ''; fTag = 'todas'; fType = 'todas'; return render();
+    case 'search-clear': query = ''; return render();
     case 'set-type': {
       const q = byId(d.qid);
       if (q) { q.type = d.t; q.updated = Date.now(); }
       return refresh();
     }
-    case 'more-ideas': bankOffset += 4; return render();
+    case 'set-tag': {
+      const q = byId(d.qid);
+      if (q) { q.tag = d.t; q.updated = Date.now(); }
+      return refresh();
+    }
+    case 'more-ideas': bankOffset += 5; return renderQBody();
     case 'add-idea': {
       const b = BANK[+d.i];
       if (!b) return;
       const live = vivas().length < MAX_VIVAS;
-      state.questions.push(mkQ(b.text, live ? 'viva' : 'cola', PALS[state.questions.length % PALS.length], { type: b.type }));
+      const q = mkQ(b.text, live ? 'viva' : 'cola', 'violet', { type: b.type });
+      state.questions.push(q);
       refresh();
-      return toast(live ? 'Añadida a tus vivas.' : 'Añadida a la cola.');
+      return toast(live ? `Añadida a tus vivas · ${tagOf(q)}` : `Añadida a la cola · ${tagOf(q)}`);
     }
     case 'status': { const q = byId(d.qid); return q && setStatus(q, d.s); }
     case 'del-q': {
@@ -616,7 +797,7 @@ function act(name, d, el) {
       save();
       renderSheet();
       render();
-      return toast('Guardado en Preguntas → Por consultar.');
+      return toast('Guardado en Preguntas → Por consultar');
     }
     case 'close-q': {
       const q = byId(d.qid);
@@ -677,7 +858,7 @@ function act(name, d, el) {
       const n = state.map.find(x => x.id === d.mid);
       const text = n && n.gap.trim();
       if (!text) return toast('Escribe primero el hueco.');
-      state.questions.push(mkQ(text, 'cola', PALS[state.questions.length % PALS.length]));
+      state.questions.push(mkQ(text, 'cola', 'violet'));
       save();
       return toast('Añadida a la cola de Preguntas.');
     }
@@ -743,7 +924,6 @@ $('#imp').addEventListener('change', async e => {
 });
 
 /* ---------- eventos ---------- */
-
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act],[data-go]');
   if (!el) return;
@@ -754,6 +934,12 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'new-q' || t.id === 'first-q') draft = t.value;
+  if (t.id === 'search') {
+    query = t.value;
+    const x = $('#search-x');
+    if (x) x.hidden = !query;
+    return renderQBody();
+  }
   if (t.classList.contains('auto')) fit(t);
   if (t.dataset.f) {
     const q = byId(t.dataset.qid);
@@ -772,9 +958,13 @@ document.addEventListener('input', e => {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && sheet) return closeSheet();
-  if (e.key !== 'Enter' || e.target.tagName !== 'INPUT' || e.target.type !== 'text') return;
-  const box = e.target.closest('.evadd, .addbar, .parkbox');
-  const btn = box && box.querySelector('[data-act]');
+  if (e.key !== 'Enter') return;
+  const t = e.target;
+  if (t.id === 'search') { t.blur(); return; }
+  const a = t.dataset && t.dataset.enter;
+  if (!a) return;
+  const box = t.closest('.evadd, .newbox, .parkbox, .addrow');
+  const btn = box && box.querySelector(`[data-act="${a}"]`);
   if (btn) { e.preventDefault(); btn.click(); }
 });
 
@@ -784,11 +974,47 @@ document.addEventListener('toggle', e => {
   if (e.target.open) folds.add(id); else folds.delete(id);
 }, true);
 
+// Gestos: deslizar en Pensar cambia de pregunta; arrastrar el asa cierra la hoja.
+let sw = null;
+let drag = null;
+document.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  const h = e.target.closest('.handle');
+  if (h) {
+    const p = $('.panel');
+    if (p) { drag = { y: t.clientY, p, dy: 0 }; p.style.transition = 'none'; p.style.animation = 'none'; }
+    return;
+  }
+  sw = null;
+  if (view !== 'pensar' || sheet) return;
+  if (e.target.closest('textarea, input, button, .dots')) return;
+  sw = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (!drag) return;
+  drag.dy = Math.max(0, e.touches[0].clientY - drag.y);
+  drag.p.style.transform = `translateY(${drag.dy}px)`;
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  if (drag) {
+    const { p, dy } = drag;
+    drag = null;
+    p.style.transition = 'transform .35s cubic-bezier(.22,.9,.3,1)';
+    if (dy > 110) { p.style.transform = 'translateY(100%)'; setTimeout(closeSheet, 180); } else p.style.transform = '';
+    return;
+  }
+  if (!sw) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - sw.x;
+  const dy = t.clientY - sw.y;
+  sw = null;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) step(dx < 0 ? 1 : -1);
+}, { passive: true });
+
 addEventListener('pagehide', save);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 
 /* ---------- arranque ---------- */
-
 // Al abrir: sigues con la última pregunta si la tocaste hace poco; si no, otra.
 (() => {
   const q = byId(state.meta.cur);
